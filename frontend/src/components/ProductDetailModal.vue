@@ -11,26 +11,16 @@
           <h3>{{ product.kor_co_nm }}</h3>
         </div>
 
-        <!-- 금리 정보 테이블 -->
-        <div class="rates-table">
-          <table>
-            <thead>
-              <tr>
-                <th>가입기간</th>
-                <th>기본금리</th>
-                <th>우대금리</th>
-                <th>금리유형</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="option in sortedOptions" :key="option.save_trm">
-                <td>{{ option.save_trm }}개월</td>
-                <td>{{ option.intr_rate.toFixed(2) }}%</td>
-                <td>{{ option.intr_rate2.toFixed(2) }}%</td>
-                <td>{{ option.intr_rate_type_nm }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- 선택된 상품의 금리 정보 -->
+        <div class="rate-info">
+          <div class="rate-item">
+            <span class="rate-label">기본금리</span>
+            <span class="rate-value">{{ selectedOption?.intr_rate.toFixed(2) }}%</span>
+          </div>
+          <div class="rate-item">
+            <span class="rate-label">우대금리</span>
+            <span class="rate-value preferential">{{ selectedOption?.intr_rate2.toFixed(2) }}%</span>
+          </div>
         </div>
 
         <!-- 상품 상세 정보 -->
@@ -70,9 +60,10 @@ const props = defineProps({
   }
 });
 
-// 가입기간 순으로 정렬된 옵션
-const sortedOptions = computed(() => {
-  return [...(props.product.options || [])].sort((a, b) => a.save_trm - b.save_trm);
+// 가장 높은 금리의 옵션 선택
+const selectedOption = computed(() => {
+  if (!props.product.options?.length) return null;
+  return [...props.product.options].sort((a, b) => b.intr_rate2 - a.intr_rate2)[0];
 });
 </script>
 
@@ -95,7 +86,7 @@ const sortedOptions = computed(() => {
   padding: 2rem;
   border-radius: 12px;
   width: 90%;
-  max-width: 900px;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -133,31 +124,34 @@ const sortedOptions = computed(() => {
   font-size: 1.25rem;
 }
 
-.rates-table {
-  margin: 1.5rem 0;
-  overflow-x: auto;
+.rate-info {
+  display: flex;
+  gap: 2rem;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
 }
 
-.rates-table table {
-  width: 100%;
-  border-collapse: collapse;
+.rate-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.rates-table th,
-.rates-table td {
-  padding: 0.75rem 1rem;
-  text-align: center;
-  border: 1px solid #e5e7eb;
+.rate-label {
+  font-size: 0.875rem;
+  color: #64748b;
 }
 
-.rates-table th {
-  background-color: #f8fafc;
+.rate-value {
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: #2563eb;
 }
 
-.rates-table td {
-  color: #334155;
+.rate-value.preferential {
+  color: #16a34a;
 }
 
 .product-details {
