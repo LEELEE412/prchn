@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import Product,DepositProducts, DepositOptions
-from .serializers import ProductSerializer,DepositProductsSerializer, DepositOptionsSerializer
+from .models import Product,DepositProducts, DepositOptions, SavingProducts, SavingOptions
+from .serializers import ProductSerializer,DepositProductsSerializer, DepositOptionsSerializer, SavingProductsSerializer, SavingOptionsSerializer
 import requests
 from django.conf import settings
 from rest_framework.decorators import api_view
@@ -125,4 +125,86 @@ def top_rate(request):
 def deposit_products_with_options(request):
     qs = DepositProducts.objects.prefetch_related('options').all()
     serializer = DepositProductsSerializer(qs, many=True)
+    return Response(serializer.data)
+
+@api_view(["GET"])
+def save_saving_products(request):
+
+    # if DepositOptions.objects.exists():
+    #     return Response({'message':'DB에 이미 데이터가 있습니다.'},status=status.HTTP_400_BAD_REQUEST)
+
+    url = (
+        f"https://finlife.fss.or.kr/finlifeapi/"
+        f"savingProductsSearch.json?auth={settings.FINLIFE_API_KEY}"
+        f"&topFinGrpNo=020000&pageNo=1"
+    )
+
+    data = requests.get(url).json().get("result", {})
+    baseList = data.get("baseList", [])
+    optionList = data.get("optionList", [])
+
+    for product in baseList:
+        product_serializer = SavingProductsSerializer(
+            data={
+                "fin_prdt_cd": product.get("fin_prdt_cd"),
+                "kor_co_nm": product.get("kor_co_nm", ""),
+                "fin_prdt_nm": product.get("fin_prdt_nm", ""),
+                "etc_note": product.get("etc_note", ""),
+                "join_deny": int(product.get("join_deny") or 1),
+                "join_member": product.get("join_member", ""),
+                "join_way": product.get("join_way", ""),
+                "spcl_cnd": product.get("spcl_cnd", ""),
+            }
+        )
+        if product_serializer.is_valid(raise_exception=True):
+            prod = product_serializer.save()
+
+    for option in optionList:
+        prod = SavingProducts.objects.get(fin_prdt_cd=option.get("fin_prdt_cd"))
+        option_serializer = SavingOptionsSerializer(
+            data={
+                "fin_prdt_cd": option.get("fin_prdt_cd", ""),
+                "intr_rate_type_nm": option.get("intr_rate_type_nm", ""),
+                "intr_rate": float(option.get("intr_rate") or -1),
+                "intr_rate2": float(option.get("intr_rate2") or -1),
+                "save_trm": int(option.get("save_trm") or 0),
+            }
+        )
+        if option_serializer.is_valid(raise_exception=True):
+            option_serializer.save(product=prod)
+
+    return Response({"message": "OK"}, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET", "POST"])
+def saving_products(request):
+    if request.method == "GET":
+        products = SavingProducts.objects.all()
+        serializer = SavingProductsSerializer(products, many=True)
+        return Response(serializer.data)
+    if request.method == "POST":
+        fin_prdt_cd = request.data.get("fin_prdt_cd")
+
+        if SavingProducts.objects.filter(fin_prdt_cd=fin_prdt_cd).exists():
+            return Response(
+                {"error": f"상품 코드 {fin_prdt_cd}는 이미 존재합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = SavingProductsSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"error": f"유효하지않은 정보. 저장되지 않았습니다."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+@api_view(["GET"])
+def Saving_product_options(request, fin_prdt_cd):
+    options = get_list_or_404(SavingOptions, fin_prdt_cd=fin_prdt_cd)
+    serializer = SavingOptionsSerializer(options, many=True)
     return Response(serializer.data)
