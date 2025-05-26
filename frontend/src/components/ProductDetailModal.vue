@@ -68,7 +68,6 @@
             >
               {{ option.save_trm }}개월 
               (기본 {{ option.intr_rate }}% / 우대 {{ option.intr_rate2 }}%)
-              )
             </option>
           </select>
         </div>
@@ -103,7 +102,6 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
-import { useProductStore } from '@/stores/productStore';
 import api from '@/lib/axios';
 
 const props = defineProps({
@@ -115,7 +113,6 @@ const props = defineProps({
 
 const router = useRouter();
 const userStore = useUserStore();
-const productStore = useProductStore();
 const selectedTerm = ref('');
 
 // 가입기간 순으로 정렬된 옵션
@@ -125,8 +122,7 @@ const sortedOptions = computed(() => {
 
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  const productId = props.product.fin_prdt_cd;
-  return userStore.subscribed?.includes(productId);
+  return userStore.subscribed?.includes(props.product.fin_prdt_cd);
 });
 
 // 가입하기 핸들러
@@ -134,7 +130,7 @@ async function onSubscribe() {
   if (!selectedTerm.value) return;
   
   try {
-    await api.post(`/api/v1/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
+    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
       term: selectedTerm.value
     });
     userStore.subscribed.push(props.product.fin_prdt_cd);
@@ -148,7 +144,7 @@ async function onSubscribe() {
 // 가입 취소 핸들러
 async function onUnsubscribe() {
   try {
-    await api.delete(`/api/v1/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
+    await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
     userStore.subscribed = userStore.subscribed.filter(id => id !== props.product.fin_prdt_cd);
     router.push('/my-products');
   } catch (err) {
