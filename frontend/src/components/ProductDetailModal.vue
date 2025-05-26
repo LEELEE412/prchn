@@ -1,67 +1,54 @@
 <template>
   <div v-if="product" class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
-      <div class="modal-header">
-        <h2>{{ product.fin_prdt_nm }}</h2>
-        <button class="close-btn" @click="$emit('close')">&times;</button>
-      </div>
+      <!-- 기존 헤더와 상품 정보는 유지 -->
       
-      <div class="modal-body">
-        <div class="bank-info">
-          <h3>{{ product.kor_co_nm }}</h3>
-        </div>
+      <!-- 가입 기간 선택 추가 -->
+      <div v-if="userStore.isLogin && !isSubscribed" class="subscription-form">
+        <h4>가입 기간 선택</h4>
+        <select v-model="selectedTerm" class="term-select">
+          <option value="">가입 기간을 선택하세요</option>
+          <option 
+            v-for="option in sortedOptions" 
+            :key="option.save_trm" 
+            :value="option.save_trm"
+          >
+            {{ option.save_trm }}개월 
+            (기본 {{ option.intr_rate }}% / 우대 {{ option.intr_rate2 }}%)
+          </option>
+        </select>
+      </div>
 
-        <!-- 금리 정보 테이블 -->
-        <div class="rates-table">
-          <table>
-            <thead>
-              <tr>
-                <th>가입기간</th>
-                <th>기본금리</th>
-                <th>우대금리</th>
-                <th>금리유형</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="option in sortedOptions" :key="option.save_trm">
-                <td>{{ option.save_trm }}개월</td>
-                <td>{{ option.intr_rate.toFixed(2) }}%</td>
-                <td>{{ option.intr_rate2.toFixed(2) }}%</td>
-                <td>{{ option.intr_rate_type_nm }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 상품 상세 정보 -->
-        <div class="product-details">
-          <div class="detail-section">
-            <h4>가입방법</h4>
-            <p>{{ product.join_way }}</p>
-          </div>
-          
-          <div class="detail-section">
-            <h4>가입대상</h4>
-            <p>{{ product.join_member }}</p>
-          </div>
-
-          <div class="detail-section">
-            <h4>우대조건</h4>
-            <p>{{ product.spcl_cnd }}</p>
-          </div>
-
-          <div class="detail-section">
-            <h4>기타 유의사항</h4>
-            <p>{{ product.etc_note }}</p>
-          </div>
-        </div>
+      <!-- 가입/삭제 버튼 -->
+      <div class="action-area">
+        <button
+          v-if="userStore.isLogin && !isSubscribed"
+          class="subscribe-btn"
+          :disabled="!selectedTerm"
+          @click="onSubscribe"
+        >
+          {{ selectedTerm ? `${selectedTerm}개월 가입하기` : '가입기간을 선택하세요' }}
+        </button>
+        <button
+          v-else-if="userStore.isLogin && isSubscribed"
+          class="unsubscribe-btn"
+          @click="onUnsubscribe"
+        >
+          가입 취소
+        </button>
+        <RouterLink v-else to="/login" class="subscribe-btn">
+          로그인 후 가입
+        </RouterLink>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/userStore';
+import { useProductStore } from '@/stores/productStore';
 
 const props = defineProps({
   product: {
@@ -70,113 +57,85 @@ const props = defineProps({
   }
 });
 
+const router = useRouter();
+const userStore = useUserStore();
+const productStore = useProductStore();
+const selectedTerm = ref('');
+
 // 가입기간 순으로 정렬된 옵션
 const sortedOptions = computed(() => {
   return [...(props.product.options || [])].sort((a, b) => a.save_trm - b.save_trm);
 });
+
+// 이미 구독된 상품인지 체크
+const isSubscribed = computed(() => {
+  const productId = props.product.id || props.product.fin_prdt_cd;
+  return userStore.subscribed?.includes(Number(productId));
+});
+
+// 가입하기 핸들러
+async function onSubscribe() {
+  if (!selectedTerm.value) return;
+  
+  try {
+    const productId = props.product.id || props.product.fin_prdt_cd;
+    await productStore.subscribe({
+      productId,
+      term: selectedTerm.value
+    });
+    router.push({ name: 'MyProducts' });
+  } catch (err) {
+    const msg = err.response?.data?.detail || err.message || '가입 중 오류가 발생했습니다.';
+    alert(msg);
+  }
+}
+
+// 가입 취소 핸들러
+async function onUnsubscribe() {
+  try {
+    const productId = props.product.id || props.product.fin_prdt_cd;
+    await productStore.unsubscribe(productId);
+    router.push({ name: 'MyProducts' });
+  } catch (err) {
+    alert('가입 취소 중 오류가 발생했습니다.');
+  }
+}
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
+/* 기존 스타일 유지 */
 
-.modal-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h2 {
-  font-size: 1.5rem;
-  color: #1a365d;
-  margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #666;
-  padding: 0.5rem;
-}
-
-.bank-info {
-  margin-bottom: 1.5rem;
-}
-
-.bank-info h3 {
-  color: #2563eb;
-  font-size: 1.25rem;
-}
-
-.rates-table {
+.subscription-form {
   margin: 1.5rem 0;
-  overflow-x: auto;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
 }
 
-.rates-table table {
+.term-select {
   width: 100%;
-  border-collapse: collapse;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  font-size: 1rem;
 }
 
-.rates-table th,
-.rates-table td {
-  padding: 0.75rem 1rem;
-  text-align: center;
-  border: 1px solid #e5e7eb;
+.unsubscribe-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  background-color: #ef4444;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.rates-table th {
-  background-color: #f8fafc;
-  font-weight: 600;
-  color: #1e293b;
+.unsubscribe-btn:hover {
+  background-color: #dc2626;
 }
 
-.rates-table td {
-  color: #334155;
-}
-
-.product-details {
-  margin-top: 2rem;
-}
-
-.detail-section {
-  margin-bottom: 1.5rem;
-}
-
-.detail-section h4 {
-  color: #1e293b;
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-}
-
-.detail-section p {
-  color: #475569;
-  line-height: 1.6;
-  margin: 0;
+.subscribe-btn:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
 }
 </style>

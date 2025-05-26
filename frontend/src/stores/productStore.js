@@ -20,28 +20,41 @@ export const useProductStore = defineStore('product', () => {
     detail.value = res.data
   }
 
-  // 가입하기: userStore.subscribe에 위임
-  async function subscribe(id) {
+  async function subscribe({ productId, term }) {
     const userStore = useUserStore()
     if (!userStore.isLogin) {
       alert('로그인 후 이용해주세요.')
       return
     }
     try {
-      // userStore.subscribe가 API 호출 및 localStorage 갱신을 담당합니다
-      await userStore.subscribe(id)
+      await api.post(`/api/v1/products/${productId}/subscribe/`, { term })
+      userStore.subscribed.push(Number(productId))
       alert('가입이 완료되었습니다.')
     } catch (err) {
       console.error(err)
-      alert(err.response?.data?.detail || '가입 중 오류가 발생했습니다.')
+      throw err
     }
   }
+
+  async function unsubscribe(productId) {
+    const userStore = useUserStore()
+    try {
+      await api.delete(`/api/v1/products/${productId}/subscribe/`)
+      userStore.subscribed = userStore.subscribed.filter(id => id !== Number(productId))
+      alert('가입이 취소되었습니다.')
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
+  }
+
 
   return {
     products,
     detail,
     fetchProducts,
     fetchProduct,
-    subscribe
+    subscribe,
+    unsubscribe
   }
 })

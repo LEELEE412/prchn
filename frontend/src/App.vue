@@ -17,35 +17,9 @@
           <RouterLink
             to="/bank-search"
             class="nav-link"
-            :class="{ active: $route.name === 'ProductsList' }"
+            :class="{ active: $route.name === 'BankSearch' }"
             v-if="userStore.isLogin"
           >근처 은행 검색</RouterLink>
-        </li>
-        <li class="nav-item dropdown" v-if="userStore.isLogin">
-          <a
-            class="nav-link dropdown-toggle"
-            data-bs-toggle="dropdown"
-            role="button"
-            aria-expanded="false"
-          >비디오</a>
-          <ul class="dropdown-menu">
-            <li><RouterLink to="/search" class="dropdown-item">검색</RouterLink></li>
-            <li><RouterLink to="/later"  class="dropdown-item">나중에 볼 영상</RouterLink></li>
-            <li><RouterLink to="/channels" class="dropdown-item">저장된 채널</RouterLink></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown" v-if="userStore.isLogin">
-          <a
-            class="nav-link dropdown-toggle"
-            data-bs-toggle="dropdown"
-            role="button"
-            aria-expanded="false"
-          >커뮤니티</a>
-          <ul class="dropdown-menu">
-            <li><RouterLink to="/community/create" class="dropdown-item">게시글 작성</RouterLink></li>
-            <li><RouterLink to="/community" class="dropdown-item">게시글 목록</RouterLink></li>
-            <li><RouterLink to="/community/mine" class="dropdown-item">내 게시글</RouterLink></li>
-          </ul>
         </li>
         <li class="nav-item dropdown" v-if="userStore.isLogin">
           <a
@@ -57,7 +31,6 @@
           <ul class="dropdown-menu">
             <li><RouterLink to="/products" class="dropdown-item">금리비교</RouterLink></li>
             <li><RouterLink to="/my-products" class="dropdown-item">내가 가입한 상품</RouterLink></li>
-            <li><RouterLink to="/all-details" class="dropdown-item">금융상품 전체 보기</RouterLink></li>
           </ul>
         </li>
       </ul>
