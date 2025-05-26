@@ -23,7 +23,7 @@
         <tr>
           <th>은행명</th>
           <th>상품명</th>
-          <th v-for="term in terms" :key="term">{{ term }}개월</th>
+          <th v-for="term in availableTerms" :key="term">{{ term }}개월</th>
         </tr>
       </thead>
       <tbody>
@@ -32,7 +32,7 @@
             class="clickable-row">
           <td>{{ product.kor_co_nm }}</td>
           <td>{{ product.fin_prdt_nm }}</td>
-          <td v-for="term in terms" :key="term" class="rate-cell">
+          <td v-for="term in availableTerms" :key="term" class="rate-cell">
             {{ formatRateForTerm(product, term) }}
           </td>
         </tr>
@@ -57,7 +57,17 @@ const products = ref([]);
 const selectedProduct = ref(null);
 const bankFilter = ref('');
 const productType = ref('deposit');
-const terms = [6, 12, 24, 36]; // 표시할 기간 목록
+
+// 모든 상품의 가능한 가입기간을 추출하여 정렬
+const availableTerms = computed(() => {
+  const terms = new Set();
+  products.value.forEach(product => {
+    product.options?.forEach(option => {
+      terms.add(option.save_trm);
+    });
+  });
+  return Array.from(terms).sort((a, b) => a - b);
+});
 
 // 은행 목록 계산
 const banks = computed(() => {
