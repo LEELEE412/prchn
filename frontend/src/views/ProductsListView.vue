@@ -23,10 +23,7 @@
         <tr>
           <th>은행명</th>
           <th>상품명</th>
-          <th>6개월</th>
-          <th>12개월</th>
-          <th>24개월</th>
-          <th>36개월</th>
+          <th v-for="term in terms" :key="term">{{ term }}개월</th>
         </tr>
       </thead>
       <tbody>
@@ -35,17 +32,8 @@
             class="clickable-row">
           <td>{{ product.kor_co_nm }}</td>
           <td>{{ product.fin_prdt_nm }}</td>
-          <td v-for="term in [6, 12, 24, 36]" :key="term" class="rate-cell">
-            <template v-if="hasTermOption(product, term)">
-              <div class="term-label">{{ term }}개월</div>
-              <div class="rate-value">
-                {{ formatRate(getOptionForTerm(product, term)) }}
-              </div>
-            </template>
-            <template v-else>
-              <div class="term-label">{{ term }}개월</div>
-              <div class="rate-value">-</div>
-            </template>
+          <td v-for="term in terms" :key="term" class="rate-cell">
+            {{ formatRateForTerm(product, term) }}
           </td>
         </tr>
       </tbody>
@@ -69,6 +57,7 @@ const products = ref([]);
 const selectedProduct = ref(null);
 const bankFilter = ref('');
 const productType = ref('deposit');
+const terms = [6, 12, 24, 36]; // 표시할 기간 목록
 
 // 은행 목록 계산
 const banks = computed(() => {
@@ -78,27 +67,15 @@ const banks = computed(() => {
 // 상품 필터링
 const filteredProducts = computed(() => {
   let filtered = products.value;
-  
-  // 은행 필터 적용
   if (bankFilter.value) {
     filtered = filtered.filter(p => p.kor_co_nm === bankFilter.value);
   }
-  
   return filtered;
 });
 
-// 특정 기간의 옵션이 있는지 확인
-function hasTermOption(product, term) {
-  return product.options?.some(o => o.save_trm === term);
-}
-
-// 특정 기간의 옵션 가져오기
-function getOptionForTerm(product, term) {
-  return product.options?.find(o => o.save_trm === term);
-}
-
-// 금리 포맷팅 (기본금리 + 우대금리)
-function formatRate(option) {
+// 특정 기간의 금리 정보 포맷팅
+function formatRateForTerm(product, term) {
+  const option = product.options?.find(o => o.save_trm === term);
   if (!option) return '-';
   return `${option.intr_rate.toFixed(2)}% (${option.intr_rate2.toFixed(2)}%)`;
 }
@@ -180,18 +157,8 @@ onMounted(loadProducts);
 }
 
 .rate-cell {
-  padding: 0.5rem 1rem;
-}
-
-.term-label {
-  font-size: 0.875rem;
-  color: #666;
-  margin-bottom: 0.25rem;
-}
-
-.rate-value {
-  font-weight: 500;
-  color: #2c3e50;
+  text-align: center;
+  font-family: monospace;
 }
 
 .clickable-row {
