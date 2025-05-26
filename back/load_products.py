@@ -33,16 +33,18 @@ def fetch_all_products(group_no: str, endpoint: str) -> list:
             },
             verify=False
         )
+        res.raise_for_status()
         data = res.json().get('result', {})
         batch = data.get('baseList', [])
-        print(data)
         if not batch:
             break
+
         items.extend(batch)
         max_page = int(data.get('max_page_no', 1))
         if page >= max_page:
             break
         page += 1
+
     return items
 
 
@@ -54,29 +56,20 @@ def main():
     deposit_items = fetch_all_products('020000', 'depositProductsSearch.json')
     saving_items  = fetch_all_products('020001', 'savingProductsSearch.json')
     all_items = deposit_items + saving_items
+
     print(f"🔄 총 수집된 상품 건수: {len(all_items)}")
-    print(all_items[0])
+    if all_items:
+        print(all_items[0])  # 첫 번째 항목 샘플 출력
 
     created = 0
     for it in all_items:
         pid = it.get('fin_prdt_cd')
         trm = int(it.get('save_trm') or 0)
-        defaults = {
-            'dcls_month':    it.get('dcls_month') or '',
-            'dcls_strt_day': it.get('dcls_strt_day') or '',
-            'dcls_end_day':  it.get('dcls_end_day') or '',
-            'fin_co_no':     it.get('fin_co_no') or '',
-            'bank_name':     it.get('kor_co_nm') or '',
-            'name':          it.get('fin_prdt_nm') or '',
-            'save_trm':      trm,
-            'intr_rate':     float(it.get('intr_rate') or 0),
-            'supr_rate':     float(it.get('supr_rate') or 0),
-            'join_deny':     it.get('join_deny') or '',
-            'join_way':      it.get('join_way') or '',
-            'spcl_cnd':      it.get('spcl_cnd') or '',
-            'etc_note':      it.get('etc_note') or '',
-        }
-        obj, was_created = Product.objects.get_or_create(
+
+        # API에서 넘어온 모든 키·값을 그대로 defaults에 담습니다.
+        defaults = { key: it.get(key) for key in it.keys() }
+
+        obj, was_created = Product.objects.update_or_create(
             product_id=pid,
             save_trm=trm,
             defaults=defaults
