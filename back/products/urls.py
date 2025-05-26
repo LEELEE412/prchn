@@ -9,6 +9,8 @@ urlpatterns = [
     path('deposit-products/', views.deposit_products),
     path('deposit-product-options/<str:fin_prdt_cd>/', views.deposit_product_options),
     path('deposit-products/top-rate/', views.top_rate),
-    path('saving-products/', views.saving_products),                  # GET /api/v1/saving-products/
-    
+    path('deposit-products-with-options/', views.deposit_products_with_options),
+    path('saving-products/', views.saving_products),
+    path('saving-save/', views.save_saving_products),
+    path('saving-products/top-rate/', views.Saving_product_options),
 ]

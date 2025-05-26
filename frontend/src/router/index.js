@@ -1,11 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView           from '@/views/HomeView.vue'
-import ProductsListView   from '@/views/ProductsListView.vue'
-import ProductsDetailView from '@/views/ProductsDetailView.vue'
-import MyProductsView     from '@/views/MyProductsView.vue'
-import LogInView          from '@/views/LogInView.vue'
-import SignUpView         from '@/views/SignUpView.vue'
+import HomeView           from '@/views/HomePage/HomeView.vue'
+import ProductsListView   from '@/views/Product/ProductsListView.vue'
+import ProductsDetailView from '@/views/Product/ProductsDetailView.vue'
+import MyProductsView     from '@/views/Product/MyProductsView.vue'
+import LogInView          from '@/views/HomePage/LogInView.vue'
+import SignUpView         from '@/views/HomePage/SignUpView.vue'
 import { useUserStore }   from '@/stores/userStore'
+import LaterView from '@/views/Video/LaterView.vue'
+import SearchView from '@/views/Video/SearchView.vue'
+import DetailView from '@/views/Video/DetailView.vue'
+import ChannelView from "@/views/Video/ChannelView.vue"
+import AllDetailsView from '@/views/Product/AllDetailsView.vue'
+import BankSearchView from '@/views/BankSearchView.vue'
+import CommunityListView   from "@/views/Community/CommunityListView.vue";
+import CommunityDetailView from "@/views/Community/CommunityDetailView.vue";
+import CommunityCreateView from "@/views/Community/CommunityCreateView.vue";
+import CommunityEditView   from "@/views/Community/CommunityEditView.vue";
+import ProfileView from '@/views/ProfileView.vue'
+import ProfileEdit from '@/views/ProfileEditView.vue'
+import UserProfileView from '@/views/UserProfileView.vue'
+import MyPostsListView       from '@/views/Community/MyPostsListView.vue'  // ← 새로 만들 컴포넌트
 
 const routes = [
   {
@@ -38,7 +52,74 @@ const routes = [
     path: '/signup',
     name: 'SignUpView',
     component: SignUpView
-  }
+  },
+  {
+    path: "/search",
+    name: "search",
+    component: SearchView,
+  },
+  {
+    path: "/later",
+    name: "later",
+    component: LaterView,
+  },
+  {
+    path: "/videos/:videoId",
+    name: "detail",
+    component: DetailView,
+  },
+  {
+  path: "/channels",
+  name: "ChannelView",
+  component: ChannelView,
+  },
+{
+  path: '/all-details',
+  name: 'AllDetails',
+  component: AllDetailsView,
+},
+{
+  path: '/bank-search',
+  name: 'BankSearch',
+  component: BankSearchView
+},
+{ path: "/community",           
+  name: "CommunityList",   
+  component: CommunityListView 
+},
+{ path: "/community/create",    
+  name: "CommunityCreate", 
+  component: CommunityCreateView 
+},
+{ path: "/community/:id",       
+  name: "CommunityDetail", 
+  component: CommunityDetailView, 
+  props: true 
+},
+{ path: "/community/:id/edit",  
+  name: "CommunityEdit",   
+  component: CommunityEditView,   
+  props: true 
+},
+
+{ path: '/profile',      
+  name: 'Profile',     
+  component: ProfileView },
+
+{ path: '/profile/edit', 
+  name: 'ProfileEdit', 
+  component: ProfileEdit },
+
+{ path: '/users/:username', 
+  name: 'UserProfile', 
+  component: UserProfileView },
+
+{
+  path: '/community/mine',
+  name: 'MyPosts',
+  component: MyPostsListView,
+},
+
 ]
 
 const router = createRouter({

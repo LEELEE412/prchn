@@ -1,85 +1,69 @@
-// src/stores/userStore.js
-import { ref, computed } from 'vue'
-import { defineStore } from 'pinia'
-import axios from 'axios'
+// frontend/src/stores/userStore.js
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import api from "@/lib/axios";
 
-export const useUserStore = defineStore(
-  'user',
-  () => {
-    const BASE_URL   = 'http://127.0.0.1:8000/api/v1'
-    const token      = ref(localStorage.getItem('token') || '')
-    const isLogin    = computed(() => !!token.value)
-    const subscribed = ref(
-      JSON.parse(localStorage.getItem('subscribed') || '[]')
-    )
+export const useUserStore = defineStore("user", () => {
+  const token    = ref(localStorage.getItem("token") || "");
+  const userId   = ref(localStorage.getItem("userId") || null);
+  const username = ref(localStorage.getItem("username") || "");
 
-    function _saveToken(val) {
-      token.value = val
-      localStorage.setItem('token', val)
-    }
-    function _clearToken() {
-      token.value = ''
-      localStorage.removeItem('token')
-    }
-    function _saveSubscribed() {
-      localStorage.setItem('subscribed', JSON.stringify(subscribed.value))
-    }
+const isLogin  = computed(() => !!token.value)
 
-    // 회원가입
-    async function signUp(payload) {
-      const url = `${BASE_URL}/accounts/registration/`
-      const res = await axios.post(url, payload)
-      return res.data
-    }
-
-    // 로그인
-    async function logIn(payload) {
-      const url = `${BASE_URL}/accounts/login/`
-      const res = await axios.post(url, payload)
-      _saveToken(res.data.key)
-      return res.data
-    }
-
-    // 로그아웃
-    function logOut() {
-      _clearToken()
-      subscribed.value = []
-      _saveSubscribed()
-    }
-
-    // 상품 구독 (가입하기)
-    async function subscribe(productId) {
-      if (!isLogin.value) {
-        throw new Error('로그인 후 이용해주세요.')
-      }
-      const url = `${BASE_URL}/products/${productId}/subscribe/`
-      await axios.post(
-        url,
-        {},
-        { headers: { Authorization: `Token ${token.value}` } }
-      )
-      // DB PK는 숫자형이므로 Number()로 변환해 저장
-      const idNum = Number(productId)
-      if (!subscribed.value.includes(idNum)) {
-        subscribed.value.push(idNum)
-        _saveSubscribed()
-      }
-    }
-
-    return {
-      token,
-      isLogin,
-      subscribed,
-      signUp,
-      logIn,
-      logOut,
-      subscribe,
-    }
-  },
-  {
-    persist: {
-      key: 'user',
-      paths: ['token', 'subscribed'],
-    },
+  function _saveToken(t) {
+    token.value = t;
+    localStorage.setItem("token", t);
+    console.log('[userStore] saved token:', t);  // ← 로그인 직후 찍히는지 확인
   }
-)
+  function _saveUserId(id) {
+    userId.value = id;
+    localStorage.setItem("userId", id);
+  }
+  function _saveUsername(u) {
+    username.value = u;
+    localStorage.setItem("username", u);
+  }
+
+  function _clearAll() {
+    token.value = "";
+    userId.value = null;
+    username.value = "";
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("username");
+  }
+
+  async function logIn({ username: u, password }) {
+    // DRF 기본 토큰 발급
+    const res = await api.post("/api-token-auth/", { username: u, password });
+    _saveToken(res.data.token);
+
+    // 내 정보 조회
+    const me = await api.get("/accounts/user/");
+    _saveUserId(me.data.pk ?? me.data.id);
+    _saveUsername(me.data.username);
+  }
+
+  async function signUp(payload) {
+    await api.post("/accounts/registration/", payload);
+  }
+
+  function logOut() {
+    _clearAll();
+  }
+
+  return {
+    token,
+    userId,
+    username,
+    isLogin,
+    logIn,
+    signUp,
+    logOut,
+  };
+}, {
+  persist: {
+    key: "user",
+    paths: ["token", "userId", "username"],
+  },
+});
