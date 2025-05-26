@@ -35,7 +35,7 @@
         </li>
       </ul>
 
-      <!-- 인증 버튼 영역: 내 프로필 / 로그아웃 or 회원가입·로그인 -->
+      <!-- 인증 버튼 영역 -->
       <div class="auth-buttons d-flex align-items-center">
         <RouterLink
           v-if="userStore.isLogin"
@@ -63,56 +63,5 @@ const userStore = useUserStore()
 </script>
 
 <style scoped>
-.navbar {
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  padding: 0.5rem 1rem;
-}
-
-/* 로고 및 인사말 */
-.brand-section .logo {
-  font-size: 1.75rem;
-  font-weight: bold;
-  text-decoration: none;
-}
-.brand-section .logo-primary { color: #004080; }
-.brand-section .logo-secondary { color: #0073e6; }
-.greeting {
-  margin-left: 1rem;
-  color: #333;
-  font-weight: 500;
-}
-
-/* 네비게이션 텍스트 스타일 */
-.nav-pills .nav-link {
-  color: #004080;
-  font-weight: 500;
-}
-.nav-pills .nav-link.active {
-  background-color: #004080;
-  color: #fff;
-}
-
-/* 드롭다운 메뉴 최소 너비 */
-.dropdown-menu {
-  min-width: 10rem;
-}
-
-/* 인증 버튼 (내 프로필, 로그아웃 등) */
-.auth-buttons .btn {
-  font-size: 0.9rem;
-}
-.auth-buttons .btn-outline-secondary {
-  color: #004080;
-  border-color: #004080;
-}
-.auth-buttons .btn-outline-secondary:hover {
-  background-color: #004080;
-  color: #fff;
-}
-
-/* 오른쪽 끝 정렬 */
-.auth-buttons {
-  margin-left: auto;
-}
+/* 기존 스타일 유지 */
 </style>

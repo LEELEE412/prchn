@@ -1,22 +1,19 @@
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { ref } from 'vue'
+import api from '@/lib/axios'
 import { useUserStore } from './userStore'
 
 export const useProductStore = defineStore('product', () => {
   const products = ref([])
-  const detail   = ref(null)
-  const BASE_URL = 'http://127.0.0.1:8000/api/v1/products'
+  const detail = ref(null)
 
-  // 전체 상품 목록 조회
   async function fetchProducts() {
-    const res = await axios.get(`${BASE_URL}/`)
+    const res = await api.get('/api/v1/products/')
     products.value = res.data
   }
 
-  // 단일 상품 상세 조회
   async function fetchProduct(id) {
-    const res = await axios.get(`${BASE_URL}/${id}/`)
+    const res = await api.get(`/api/v1/products/${id}/`)
     detail.value = res.data
   }
 
@@ -47,7 +44,6 @@ export const useProductStore = defineStore('product', () => {
       throw err
     }
   }
-
 
   return {
     products,

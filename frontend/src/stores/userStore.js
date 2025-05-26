@@ -1,19 +1,18 @@
-// frontend/src/stores/userStore.js
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import api from "@/lib/axios";
 
 export const useUserStore = defineStore("user", () => {
-  const token    = ref(localStorage.getItem("token") || "");
-  const userId   = ref(localStorage.getItem("userId") || null);
+  const token = ref(localStorage.getItem("token") || "");
+  const userId = ref(localStorage.getItem("userId") || null);
   const username = ref(localStorage.getItem("username") || "");
+  const subscribed = ref([]);
 
-const isLogin  = computed(() => !!token.value)
+  const isLogin = computed(() => !!token.value)
 
   function _saveToken(t) {
     token.value = t;
     localStorage.setItem("token", t);
-    console.log('[userStore] saved token:', t);  // ← 로그인 직후 찍히는지 확인
   }
   function _saveUserId(id) {
     userId.value = id;
@@ -28,20 +27,23 @@ const isLogin  = computed(() => !!token.value)
     token.value = "";
     userId.value = null;
     username.value = "";
+    subscribed.value = [];
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
   }
 
   async function logIn({ username: u, password }) {
-    // DRF 기본 토큰 발급
     const res = await api.post("/api-token-auth/", { username: u, password });
     _saveToken(res.data.token);
 
-    // 내 정보 조회
-    const me = await api.get("/accounts/user/");
+    const me = await api.get("/accounts/profile/");
     _saveUserId(me.data.pk ?? me.data.id);
     _saveUsername(me.data.username);
+    
+    // 구독 정보 로드
+    const products = await api.get("/api/v1/products/");
+    subscribed.value = products.data.filter(p => p.is_subscribed).map(p => p.id);
   }
 
   async function signUp(payload) {
@@ -56,14 +58,10 @@ const isLogin  = computed(() => !!token.value)
     token,
     userId,
     username,
+    subscribed,
     isLogin,
     logIn,
     signUp,
     logOut,
   };
-}, {
-  persist: {
-    key: "user",
-    paths: ["token", "userId", "username"],
-  },
 });
