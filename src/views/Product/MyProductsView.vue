@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="my-products">
     <h2>내가 가입한 상품</h2>
@@ -12,7 +11,14 @@
       >
         <div class="product-info">
           <h3>{{ product.bank_name }}</h3>
-          <p>{{ product.name }}</p>
+          <p class="product-name">{{ product.name }}</p>
+          <div class="product-details">
+            <p class="rate-info">
+              <span class="base-rate">기본금리: {{ product.intr_rate }}%</span>
+              <span class="pref-rate">우대금리: {{ product.supr_rate }}%</span>
+            </p>
+            <p class="term-info">가입기간: {{ product.save_trm }}개월</p>
+          </div>
         </div>
       </div>
     </div>
@@ -24,6 +30,7 @@
       v-if="selectedProduct"
       :product="selectedProduct"
       @close="selectedProduct = null"
+      @subscribe="handleSubscribe"
     />
   </div>
 </template>
@@ -38,9 +45,9 @@ const productStore = useProductStore()
 const userStore = useUserStore()
 const selectedProduct = ref(null)
 
-onMounted(() => {
+onMounted(async () => {
   if (!productStore.products.length) {
-    productStore.fetchProducts()
+    await productStore.fetchProducts()
   }
 })
 
@@ -52,6 +59,16 @@ const myList = computed(() =>
 
 function showProductDetail(product) {
   selectedProduct.value = product
+}
+
+async function handleSubscribe(productId) {
+  try {
+    await productStore.subscribe(productId)
+    selectedProduct.value = null
+  } catch (err) {
+    console.error('Subscription failed:', err)
+    alert('상품 가입 중 오류가 발생했습니다.')
+  }
 }
 </script>
 
@@ -98,9 +115,34 @@ function showProductDetail(product) {
   margin-bottom: 0.5rem;
 }
 
-.product-info p {
-  color: #666;
+.product-name {
+  color: #333;
   font-size: 1rem;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.product-details {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.rate-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.base-rate {
+  color: #2C5282;
+}
+
+.pref-rate {
+  color: #E53E3E;
+}
+
+.term-info {
+  color: #666;
   margin: 0;
 }
 
@@ -112,4 +154,3 @@ function showProductDetail(product) {
   font-style: italic;
 }
 </style>
-```
