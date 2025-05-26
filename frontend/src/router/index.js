@@ -9,16 +9,15 @@ import LaterView from '@/views/Video/LaterView.vue'
 import SearchView from '@/views/Video/SearchView.vue'
 import DetailView from '@/views/Video/DetailView.vue'
 import ChannelView from "@/views/Video/ChannelView.vue"
-import AllDetailsView from '@/views/Product/AllDetailsView.vue'
 import BankSearchView from '@/views/BankSearchView.vue'
-import CommunityListView   from "@/views/Community/CommunityListView.vue";
-import CommunityDetailView from "@/views/Community/CommunityDetailView.vue";
-import CommunityCreateView from "@/views/Community/CommunityCreateView.vue";
-import CommunityEditView   from "@/views/Community/CommunityEditView.vue";
+import CommunityListView   from "@/views/Community/CommunityListView.vue"
+import CommunityDetailView from "@/views/Community/CommunityDetailView.vue"
+import CommunityCreateView from "@/views/Community/CommunityCreateView.vue"
+import CommunityEditView   from "@/views/Community/CommunityEditView.vue"
 import ProfileView from '@/views/ProfileView.vue'
 import ProfileEdit from '@/views/ProfileEditView.vue'
 import UserProfileView from '@/views/UserProfileView.vue'
-import MyPostsListView       from '@/views/Community/MyPostsListView.vue'  // ← 새로 만들 컴포넌트
+import MyPostsListView from '@/views/Community/MyPostsListView.vue'
 
 const routes = [
   {
@@ -32,15 +31,10 @@ const routes = [
     component: ProductsListView
   },
   {
-    path: '/products/:id',
-    name: 'ProductsDetail',
-    component: ProductsDetailView,
-    meta: { requiresAuth: true }   // 상세조회(구독) 시 로그인 필요
-  },
-  {
     path: '/my-products',
     name: 'MyProducts',
-    component: MyProductsView
+    component: MyProductsView,
+    meta: { requiresAuth: true }
   },
   {
     path: '/login',
@@ -68,57 +62,59 @@ const routes = [
     component: DetailView,
   },
   {
-  path: "/channels",
-  name: "ChannelView",
-  component: ChannelView,
+    path: "/channels",
+    name: "ChannelView",
+    component: ChannelView,
   },
-{
-  path: '/all-details',
-  name: 'AllDetails',
-  component: AllDetailsView,
-},
-{
-  path: '/bank-search',
-  name: 'BankSearch',
-  component: BankSearchView
-},
-{ path: "/community",           
-  name: "CommunityList",   
-  component: CommunityListView 
-},
-{ path: "/community/create",    
-  name: "CommunityCreate", 
-  component: CommunityCreateView 
-},
-{ path: "/community/:id",       
-  name: "CommunityDetail", 
-  component: CommunityDetailView, 
-  props: true 
-},
-{ path: "/community/:id/edit",  
-  name: "CommunityEdit",   
-  component: CommunityEditView,   
-  props: true 
-},
-
-{ path: '/profile',      
-  name: 'Profile',     
-  component: ProfileView },
-
-{ path: '/profile/edit', 
-  name: 'ProfileEdit', 
-  component: ProfileEdit },
-
-{ path: '/users/:username', 
-  name: 'UserProfile', 
-  component: UserProfileView },
-
-{
-  path: '/community/mine',
-  name: 'MyPosts',
-  component: MyPostsListView,
-},
-
+  {
+    path: '/bank-search',
+    name: 'BankSearch',
+    component: BankSearchView
+  },
+  { 
+    path: "/community",           
+    name: "CommunityList",   
+    component: CommunityListView 
+  },
+  { 
+    path: "/community/create",    
+    name: "CommunityCreate", 
+    component: CommunityCreateView 
+  },
+  { 
+    path: "/community/:id",       
+    name: "CommunityDetail", 
+    component: CommunityDetailView,
+    props: true 
+  },
+  { 
+    path: "/community/:id/edit",  
+    name: "CommunityEdit",   
+    component: CommunityEditView,
+    props: true 
+  },
+  { 
+    path: '/profile',      
+    name: 'Profile',     
+    component: ProfileView,
+    meta: { requiresAuth: true }
+  },
+  { 
+    path: '/profile/edit', 
+    name: 'ProfileEdit', 
+    component: ProfileEdit,
+    meta: { requiresAuth: true }
+  },
+  { 
+    path: '/users/:username', 
+    name: 'UserProfile', 
+    component: UserProfileView 
+  },
+  {
+    path: '/community/mine',
+    name: 'MyPosts',
+    component: MyPostsListView,
+  },
 ]
 
 const router = createRouter({
@@ -126,11 +122,9 @@ const router = createRouter({
   routes
 })
 
-// 전역 네비게이션 가드
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   if (to.meta.requiresAuth && !userStore.isLogin) {
-    // 로그인 안 된 상태에서 상세조회(구독) 접근 시 로그인 페이지로
     next({ name: 'LogInView' })
   } else {
     next()
