@@ -103,6 +103,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import { useProductStore } from '@/stores/productStore';
+import api from '@/lib/axios';
 
 const props = defineProps({
   product: {
@@ -123,8 +124,8 @@ const sortedOptions = computed(() => {
 
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  const productId = props.product.id || props.product.fin_prdt_cd;
-  return userStore.subscribed?.includes(Number(productId));
+  const productId = props.product.fin_prdt_cd;
+  return userStore.subscribed?.includes(productId);
 });
 
 // 가입하기 핸들러
@@ -132,25 +133,25 @@ async function onSubscribe() {
   if (!selectedTerm.value) return;
   
   try {
-    const productId = props.product.id || props.product.fin_prdt_cd;
-    await productStore.subscribe({
-      productId,
+    await api.post(`/api/v1/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
       term: selectedTerm.value
     });
-    router.push({ name: 'MyProducts' });
+    userStore.subscribed.push(props.product.fin_prdt_cd);
+    router.push('/my-products');
   } catch (err) {
-    const msg = err.response?.data?.detail || err.message || '가입 중 오류가 발생했습니다.';
-    alert(msg);
+    console.error('Subscription failed:', err);
+    alert('상품 가입 중 오류가 발생했습니다.');
   }
 }
 
 // 가입 취소 핸들러
 async function onUnsubscribe() {
   try {
-    const productId = props.product.id || props.product.fin_prdt_cd;
-    await productStore.unsubscribe(productId);
-    router.push({ name: 'MyProducts' });
+    await api.delete(`/api/v1/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
+    userStore.subscribed = userStore.subscribed.filter(id => id !== props.product.fin_prdt_cd);
+    router.push('/my-products');
   } catch (err) {
+    console.error('Unsubscribe failed:', err);
     alert('가입 취소 중 오류가 발생했습니다.');
   }
 }
@@ -313,14 +314,5 @@ async function onUnsubscribe() {
 
 .unsubscribe-btn:hover {
   background-color: #dc2626;
-}
-
-.subscribed-label {
-  display: inline-block;
-  padding: 0.75rem 2rem;
-  background-color: #e0e0e0;
-  color: #555;
-  border-radius: 4px;
-  font-weight: 500;
 }
 </style>
