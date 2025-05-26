@@ -31,9 +31,15 @@
             @click="showProductDetail(product)"
             class="clickable-row">
           <td>{{ product.kor_co_nm }}</td>
-          <td>{{ product.fin_prdt_nm }}</td>
+          <td class="product-name">
+            <div class="name">{{ product.fin_prdt_nm }}</div>
+          </td>
           <td v-for="term in availableTerms" :key="term" class="rate-cell">
-            {{ formatRateForTerm(product, term) }}
+            <div class="rate-info" v-if="getRateInfo(product, term).hasRate">
+              <span class="base-rate">{{ getRateInfo(product, term).baseRate }}%</span>
+              <span class="pref-rate">({{ getRateInfo(product, term).prefRate }}%)</span>
+            </div>
+            <span v-else>-</span>
           </td>
         </tr>
       </tbody>
@@ -83,11 +89,16 @@ const filteredProducts = computed(() => {
   return filtered;
 });
 
-// 특정 기간의 금리 정보 포맷팅
-function formatRateForTerm(product, term) {
+// 특정 기간의 금리 정보 가져오기
+function getRateInfo(product, term) {
   const option = product.options?.find(o => o.save_trm === term);
-  if (!option) return '-';
-  return `${option.intr_rate.toFixed(2)}% (${option.intr_rate2.toFixed(2)}%)`;
+  if (!option) return { hasRate: false };
+  
+  return {
+    hasRate: true,
+    baseRate: option.intr_rate.toFixed(2),
+    prefRate: option.intr_rate2.toFixed(2)
+  };
 }
 
 // 상품 상세 표시
@@ -166,9 +177,32 @@ onMounted(loadProducts);
   color: #2c3e50;
 }
 
+.product-name {
+  padding: 0.75rem 1rem;
+}
+
+.product-name .name {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
 .rate-cell {
   text-align: center;
-  font-family: monospace;
+  padding: 0.75rem 1rem;
+}
+
+.rate-info {
+  font-size: 0.9em;
+}
+
+.base-rate {
+  color: #2C5282;
+  font-weight: 500;
+}
+
+.pref-rate {
+  color: #E53E3E;
+  margin-left: 0.25rem;
 }
 
 .clickable-row {
