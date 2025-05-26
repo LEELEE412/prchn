@@ -19,15 +19,38 @@ class ProductDetailAPI(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
-# 가입하기 (로그인 필요)
-class ProductSubscribeAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = Product.objects.all()
+# # 가입하기 (로그인 필요)
+# class ProductSubscribeAPI(generics.GenericAPIView):
+#     permission_classes = [permissions.IsAuthenticated]
+#     queryset = Product.objects.all()
 
-    def post(self, request, pk):
-        product = self.get_object()
-        request.user.subscribed.add(product)  # User.subscribed M2M 필드
-        return Response({'detail': '가입 완료'}, status=status.HTTP_200_OK)
+#     def post(self, request, pk):
+#         product = self.get_object()
+#         request.user.subscribed.add(product)  # User.subscribed M2M 필드
+#         return Response({'detail': '가입 완료'}, status=status.HTTP_200_OK)
+
+class DepositProductSubscribeAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = DepositProducts.objects.all()
+    lookup_field = 'fin_prdt_cd'
+    lookup_url_kwarg = 'fin_prdt_cd'
+
+    def post(self, request, fin_prdt_cd):
+        depo = self.get_object()
+        request.user.subscribed_deposit_products.add(depo)
+        return Response({'detail': '예금상품 구독 완료'}, status=status.HTTP_200_OK)
+
+class SavingProductSubscribeAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = SavingProducts.objects.all()
+    lookup_field = 'fin_prdt_cd'
+    lookup_url_kwarg = 'fin_prdt_cd'
+
+    def post(self, request, fin_prdt_cd):
+        save = self.get_object()
+        request.user.subscribed_saving_products.add(save)
+        return Response({'detail': '적금상품 구독 완료'}, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def save_deposit_products(request):

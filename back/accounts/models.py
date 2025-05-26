@@ -1,7 +1,7 @@
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from products.models import Product
+from products.models import DepositOptions, DepositProducts, SavingProducts
 
 
 def generate_membership_number():
@@ -32,11 +32,17 @@ class User(AbstractUser):
         default=generate_membership_number,
         editable=False,
     )
-    subscribed = models.ManyToManyField(
-        Product,
-        blank=True,
+    subscribed_deposit_products = models.ManyToManyField(
+        'products.DepositProducts',
         related_name='subscribers',
-        verbose_name='가입한 상품'
+        blank=True,
+        verbose_name='가입한 정기예금 상품'
+    )
+    subscirbed_saving_products = models.ManyToManyField(
+        'products.SavingProducts',
+        related_name='subscribers',
+        blank=True,
+        verbose_name='가입한 적금 상품'
     )
 
     # 팔로우 기능 (비대칭 self‐referential M2M)
