@@ -290,3 +290,6 @@ test/
 # Environment directories and files
 env/
 *.env
+/node_modules
+/dist
+
