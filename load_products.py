@@ -35,7 +35,6 @@ def fetch_all_products(group_no: str, endpoint: str) -> list:
         )
         data = res.json().get('result', {})
         batch = data.get('baseList', [])
-        print(data)
         if not batch:
             break
         items.extend(batch)
@@ -55,7 +54,6 @@ def main():
     saving_items  = fetch_all_products('020001', 'savingProductsSearch.json')
     all_items = deposit_items + saving_items
     print(f"🔄 총 수집된 상품 건수: {len(all_items)}")
-    print(all_items[0])
 
     created = 0
     for it in all_items:
