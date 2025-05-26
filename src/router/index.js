@@ -5,7 +5,6 @@ import MyProductsView from '@/views/Product/MyProductsView.vue'
 import LogInView from '@/views/HomePage/LogInView.vue'
 import SignUpView from '@/views/HomePage/SignUpView.vue'
 import { useUserStore } from '@/stores/userStore'
-import AllDetailsView from '@/views/Product/AllDetailsView.vue'
 import BankSearchView from '@/views/BankSearchView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ProfileEdit from '@/views/ProfileEditView.vue'
@@ -37,11 +36,6 @@ const routes = [
     path: '/signup',
     name: 'SignUpView',
     component: SignUpView
-  },
-  {
-    path: '/all-details',
-    name: 'AllDetails',
-    component: AllDetailsView,
   },
   {
     path: '/bank-search',
