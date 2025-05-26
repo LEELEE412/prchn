@@ -68,6 +68,7 @@
             >
               {{ option.save_trm }}개월 
               (기본 {{ option.intr_rate }}% / 우대 {{ option.intr_rate2 }}%)
+              )
             </option>
           </select>
         </div>
