@@ -35,8 +35,17 @@
             class="clickable-row">
           <td>{{ product.kor_co_nm }}</td>
           <td>{{ product.fin_prdt_nm }}</td>
-          <td v-for="term in [6, 12, 24, 36]" :key="term">
-            {{ getRateForTerm(product, term) }}
+          <td v-for="term in [6, 12, 24, 36]" :key="term" class="rate-cell">
+            <template v-if="hasTermOption(product, term)">
+              <div class="term-label">{{ term }}개월</div>
+              <div class="rate-value">
+                {{ formatRate(getOptionForTerm(product, term)) }}
+              </div>
+            </template>
+            <template v-else>
+              <div class="term-label">{{ term }}개월</div>
+              <div class="rate-value">-</div>
+            </template>
           </td>
         </tr>
       </tbody>
@@ -78,9 +87,18 @@ const filteredProducts = computed(() => {
   return filtered;
 });
 
-// 특정 기간의 금리 표시 (기본금리 + 우대금리)
-function getRateForTerm(product, term) {
-  const option = product.options?.find(o => o.save_trm === term);
+// 특정 기간의 옵션이 있는지 확인
+function hasTermOption(product, term) {
+  return product.options?.some(o => o.save_trm === term);
+}
+
+// 특정 기간의 옵션 가져오기
+function getOptionForTerm(product, term) {
+  return product.options?.find(o => o.save_trm === term);
+}
+
+// 금리 포맷팅 (기본금리 + 우대금리)
+function formatRate(option) {
   if (!option) return '-';
   return `${option.intr_rate.toFixed(2)}% (${option.intr_rate2.toFixed(2)}%)`;
 }
@@ -158,6 +176,21 @@ onMounted(loadProducts);
 .rates-table th {
   background-color: #f5f7fa;
   font-weight: 600;
+  color: #2c3e50;
+}
+
+.rate-cell {
+  padding: 0.5rem 1rem;
+}
+
+.term-label {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.rate-value {
+  font-weight: 500;
   color: #2c3e50;
 }
 
