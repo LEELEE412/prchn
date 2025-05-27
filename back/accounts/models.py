@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from products.models import DepositOptions, DepositProducts, SavingProducts
 from django.utils import timezone
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 def generate_membership_number():
@@ -13,7 +15,12 @@ def generate_membership_number():
 
 class UserSubscription(models.Model):
     user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='subscriptions')
-    product = models.ForeignKey('products.DepositProducts', on_delete=models.CASCADE)
+    
+    # Generic Foreign Key for product
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    product = GenericForeignKey('content_type', 'object_id')
+    
     term_months = models.IntegerField()
     start_date = models.DateTimeField(default=timezone.now)
     end_date = models.DateTimeField()
