@@ -9,14 +9,14 @@ import LaterView from '@/views/Video/LaterView.vue'
 import SearchView from '@/views/Video/SearchView.vue'
 import DetailView from '@/views/Video/DetailView.vue'
 import ChannelView from "@/views/Video/ChannelView.vue"
-import BankSearchView from '@/views/BankSearchView.vue'
+import BankSearchView from '@/views/Map/BankSearchView.vue'
 import CommunityListView   from "@/views/Community/CommunityListView.vue"
 import CommunityDetailView from "@/views/Community/CommunityDetailView.vue"
 import CommunityCreateView from "@/views/Community/CommunityCreateView.vue"
 import CommunityEditView   from "@/views/Community/CommunityEditView.vue"
-import ProfileView from '@/views/ProfileView.vue'
-import ProfileEdit from '@/views/ProfileEditView.vue'
-import UserProfileView from '@/views/UserProfileView.vue'
+import ProfileView from '@/views/Profile/ProfileView.vue'
+import ProfileEdit from '@/views/Profile/ProfileEditView.vue'
+import UserProfileView from '@/views/Profile/UserProfileView.vue'
 import MyPostsListView from '@/views/Community/MyPostsListView.vue'
 
 const routes = [

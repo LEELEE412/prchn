@@ -62,3 +62,30 @@ class FollowToggleView(generics.GenericAPIView):
 
         serializer = self.get_serializer(target, context={'request': request})
         return Response(serializer.data)
+
+class FollowersListView(generics.ListAPIView):
+    """
+    GET /api/v1/accounts/users/{username}/followers/
+    해당 유저를 팔로우하는 사람들의 리스트 반환
+    """
+    permission_classes = [permissions.AllowAny]
+    serializer_class = PublicProfileSerializer
+
+    def get_queryset(self):
+        username = self.kwargs['username']
+        user = generics.get_object_or_404(User, username=username)
+        return user.followers.all()
+
+
+class FollowingListView(generics.ListAPIView):
+    """
+    GET /api/v1/accounts/users/{username}/following/
+    해당 유저가 팔로우하고 있는 사람들의 리스트 반환
+    """
+    permission_classes = [permissions.AllowAny]
+    serializer_class = PublicProfileSerializer
+
+    def get_queryset(self):
+        username = self.kwargs['username']
+        user = generics.get_object_or_404(User, username=username)
+        return user.following.all()

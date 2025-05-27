@@ -122,7 +122,6 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close']);
 const router = useRouter();
 const userStore = useUserStore();
 
@@ -139,10 +138,6 @@ const sortedOptions = computed(() => {
 
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  const isSavingProduct = props.product.fin_prdt_cd?.startsWith('S');
-  if (isSavingProduct) {
-    return userStore.subscribed_saving_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
-  }
   return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
 });
 
@@ -162,18 +157,12 @@ function updateEndDate() {
 
 // 가입하기 핸들러
 async function onSubscribe() {
-  const subscriptionData = {
-    term_months: selectedTerm.value,
-    start_date: startDate.value,
-    end_date: endDate.value
-  };
-
   try {
-    const isSavingProduct = props.product.fin_prdt_cd?.startsWith('S');
-    const endpoint = isSavingProduct ? 'saving-products' : 'deposit-products';
-    
-    await api.post(`/products/${endpoint}/subscribe/${props.product.fin_prdt_cd}/`, subscriptionData);
-    emit('close');
+    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
+      term_months: selectedTerm.value,
+      start_date: startDate.value,
+      end_date: endDate.value
+    });
     router.push('/my-products');
   } catch (err) {
     console.error('Subscription failed:', err);
@@ -184,11 +173,7 @@ async function onSubscribe() {
 // 가입 취소 핸들러
 async function onUnsubscribe() {
   try {
-    const isSavingProduct = props.product.fin_prdt_cd?.startsWith('S');
-    const endpoint = isSavingProduct ? 'saving-products' : 'deposit-products';
-    
-    await api.delete(`/products/${endpoint}/subscribe/${props.product.fin_prdt_cd}/`);
-    emit('close');
+    await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
     router.push('/my-products');
   } catch (err) {
     console.error('Unsubscribe failed:', err);

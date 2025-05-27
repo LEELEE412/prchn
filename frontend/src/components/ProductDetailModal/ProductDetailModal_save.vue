@@ -138,7 +138,7 @@ const sortedOptions = computed(() => {
 
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
+  return userStore.subscribed_saving_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
 });
 
 // 가입 가능 여부 체크
@@ -158,7 +158,7 @@ function updateEndDate() {
 // 가입하기 핸들러
 async function onSubscribe() {
   try {
-    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
+    await api.post(`/products/saving-products/subscribe/${props.product.fin_prdt_cd}/`, {
       term_months: selectedTerm.value,
       start_date: startDate.value,
       end_date: endDate.value
@@ -173,7 +173,7 @@ async function onSubscribe() {
 // 가입 취소 핸들러
 async function onUnsubscribe() {
   try {
-    await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
+    await api.delete(`/products/saving-products/subscribe/${props.product.fin_prdt_cd}/`);
     router.push('/my-products');
   } catch (err) {
     console.error('Unsubscribe failed:', err);

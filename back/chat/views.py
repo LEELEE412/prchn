@@ -7,8 +7,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from openai import OpenAI
-from products.models import SavingProducts, SavingOptions, DepositOptions, DepositProducts  # 여러분의 앱 경로에 맞춰 수정하세요
-from products.serializers import SavingProductsSerializer, SavingOptionsSerializer, DepositProductsSerializer, DepositOptionsSerializer
+from products.models import (
+    DepositProducts, DepositOptions,
+    SavingProducts, SavingOptions
+)
+from products.serializers import (
+    DepositProductsSerializer, DepositOptionsSerializer,
+    SavingProductsSerializer, SavingOptionsSerializer
+)
 
 logger = logging.getLogger(__name__)
 client = OpenAI()  # settings.py에 API 키 설정 필요
@@ -21,17 +27,25 @@ class RecommendChatView(APIView):
         if not user_msg:
             return Response({"detail": "메시지를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1) DB에서 예·적금 옵션 샘플 가져와 prompt 에 포함
-        qs = DepositOptions.objects.select_related("product").all()[:30]
+        # 1) 예금 옵션 샘플 + 적금 옵션 샘플 합치기
         options = []
-        for o in qs:
+        for o in DepositOptions.objects.select_related("product").all()[:50]:
             options.append({
-                "code":       o.fin_prdt_cd,
-                "company":    o.product.kor_co_nm,
-                "name":       o.product.fin_prdt_nm,
-                "rate":       o.intr_rate,
-                "max_rate":   o.intr_rate2,
-                "term":       o.save_trm,
+                "code":     o.fin_prdt_cd,
+                "company":  o.product.kor_co_nm,
+                "name":     o.product.fin_prdt_nm,
+                "rate":     o.intr_rate,
+                "max_rate": o.intr_rate2,
+                "term":     o.save_trm,
+            })
+        for o in SavingOptions.objects.select_related("product").all()[:50]:
+            options.append({
+                "code":     o.fin_prdt_cd,
+                "company":  o.product.kor_co_nm,
+                "name":     o.product.fin_prdt_nm,
+                "rate":     o.intr_rate,
+                "max_rate": o.intr_rate2,
+                "term":     o.save_trm,
             })
 
         system_prompt = "당신은 금융상품 추천 전문가입니다."
@@ -54,14 +68,12 @@ class RecommendChatView(APIView):
             )
             raw = resp.choices[0].message.content
 
-            # 2) GPT 응답에서 ```json ... ``` 블록 파싱
+            # 2) ```json``` 블록 파싱
             m = re.search(r"```(?:json)?\s*([\s\S]+?)```", raw, re.IGNORECASE)
-            json_str = m.group(1) if m else raw
-
+            json_str = m.group(1).strip() if m else raw.strip()
             try:
                 rec = json.loads(json_str)
             except json.JSONDecodeError:
-                # 파싱 실패 시 원본 raw 텍스트만 돌려줌
                 return Response(
                     {"detail": "추천 결과 파싱 실패", "raw": raw},
                     status=status.HTTP_200_OK
@@ -74,16 +86,24 @@ class RecommendChatView(APIView):
                     status=status.HTTP_200_OK
                 )
 
-            # 3) DB에서 실제 상품 및 옵션 불러오기
-            product = DepositProducts.objects.get(fin_prdt_cd=code)
-            prod_ser = DepositProductsSerializer(product)
-            opts = DepositOptions.objects.filter(product=product).order_by("save_trm")
-            opt_ser = DepositOptionsSerializer(opts, many=True)
+            # 3) code 에 해당하는 실제 DB 모델 찾기
+            # 우선 예금 테이블에서 검색
+            product = DepositProducts.objects.filter(fin_prdt_cd=code).first()
+            if product:
+                prod_ser = DepositProductsSerializer(product)
+                opts_qs = DepositOptions.objects.filter(product=product).order_by("save_trm")
+                opt_ser = DepositOptionsSerializer(opts_qs, many=True)
+            else:
+                # 예금에 없으면 적금에서 검색
+                product = SavingProducts.objects.get(fin_prdt_cd=code)
+                prod_ser = SavingProductsSerializer(product)
+                opts_qs = SavingOptions.objects.filter(product=product).order_by("save_trm")
+                opt_ser = SavingOptionsSerializer(opts_qs, many=True)
 
             full_product = prod_ser.data
             full_product["options"] = opt_ser.data
 
-            # 4) 클라이언트에 설명(raw) + full_product 전송
+            # 4) 클라이언트에 설명 + full_product 반환
             return Response({
                 "explanation": raw,
                 "product": full_product

@@ -30,7 +30,7 @@
           >비디오</a>
           <ul class="dropdown-menu">
             <li><RouterLink to="/search" class="dropdown-item">검색</RouterLink></li>
-            <li><RouterLink to="/later"  class="dropdown-item">나중에 볼 영상</RouterLink></li>
+            <li><RouterLink to="/later" class="dropdown-item">나중에 볼 영상</RouterLink></li>
             <li><RouterLink to="/channels" class="dropdown-item">저장된 채널</RouterLink></li>
           </ul>
         </li>
@@ -57,17 +57,13 @@
           <ul class="dropdown-menu">
             <li><RouterLink to="/products" class="dropdown-item">금리비교</RouterLink></li>
             <li><RouterLink to="/my-products" class="dropdown-item">내가 가입한 상품</RouterLink></li>
-            <li><RouterLink to="/all-details" class="dropdown-item">금융상품 전체 보기</RouterLink></li>
           </ul>
         </li>
       </ul>
 
       <!-- 인증 버튼 영역: 내 프로필 / 로그아웃 or 회원가입·로그인 -->
       <div class="auth-buttons d-flex align-items-center">
-          <div>
-            <!-- ... -->
-            <Chatbot />
-          </div>
+        <Chatbot />
         <RouterLink
           v-if="userStore.isLogin"
           to="/profile"
@@ -76,7 +72,7 @@
         <button
           v-if="userStore.isLogin"
           class="btn btn-outline-primary"
-          @click="userStore.logOut"
+          @click="handleLogout"
         >로그아웃</button>
         <template v-else>
           <RouterLink to="/signup" class="btn btn-outline-primary me-2">회원가입</RouterLink>
@@ -90,61 +86,108 @@
 
 <script setup>
 import { useUserStore } from '@/stores/userStore'
-import Chatbot from "@/components/Chatbot.vue";
+import { useRouter } from 'vue-router'
+import Chatbot from '@/components/Chatbot.vue'
+
 const userStore = useUserStore()
+const router = useRouter()
+
+function handleLogout() {
+  userStore.logOut()
+  router.push('/')
+}
 </script>
 
 <style scoped>
-.navbar {
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  padding: 0.5rem 1rem;
+/* 테마 변수 */
+:root {
+  --color-primary: #01c878;
+  --color-primary-dark: #019e65;
+  --color-bg: #ffffff;
+  --color-text: #212529;
+  --color-border: #e9ecef;
+  --transition-speed: 0.3s;
 }
 
-/* 로고 및 인사말 */
+.navbar {
+  background-color: var(--color-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+
+/* 브랜드 로고 */
 .brand-section .logo {
   font-size: 1.75rem;
-  font-weight: bold;
-  text-decoration: none;
+  font-weight: 700;
+  transition: transform var(--transition-speed);
 }
-.brand-section .logo-primary { color: #004080; }
-.brand-section .logo-secondary { color: #0073e6; }
+.brand-section .logo:hover {
+  transform: scale(1.05);
+}
+.logo-primary { color: var(--color-primary-dark); }
+.logo-secondary { color: var(--color-primary); }
 .greeting {
   margin-left: 1rem;
-  color: #333;
+  color: var(--color-text);
   font-weight: 500;
+  opacity: 0.8;
 }
 
-/* 네비게이션 텍스트 스타일 */
+/* 네비게이션 */
 .nav-pills .nav-link {
-  color: #004080;
+  color: var(--color-primary-dark);
   font-weight: 500;
+  transition: background-color var(--transition-speed),
+              color var(--transition-speed);
+}
+.nav-pills .nav-link:hover {
+  background-color: rgba(1, 200, 120, 0.1);
 }
 .nav-pills .nav-link.active {
-  background-color: #004080;
+  background-color: var(--color-primary);
   color: #fff;
 }
-
-/* 드롭다운 메뉴 최소 너비 */
 .dropdown-menu {
-  min-width: 10rem;
+  min-width: 12rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.2s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 인증 버튼 (내 프로필, 로그아웃 등) */
+/* 인증 버튼 */
 .auth-buttons .btn {
   font-size: 0.9rem;
+  border-radius: 6px;
+  transition: background-color var(--transition-speed),
+              transform var(--transition-speed);
 }
-.auth-buttons .btn-outline-secondary {
-  color: #004080;
-  border-color: #004080;
-}
-.auth-buttons .btn-outline-secondary:hover {
-  background-color: #004080;
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary-dark);
   color: #fff;
 }
-
-/* 오른쪽 끝 정렬 */
-.auth-buttons {
-  margin-left: auto;
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+}
+.btn-outline-primary {
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+.btn-outline-primary:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+.btn-outline-secondary {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn-outline-secondary:hover {
+  background-color: var(--color-border);
 }
 </style>
