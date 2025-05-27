@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from openai import OpenAI
-from products.models import SavingProducts, SavingOptions  # 여러분의 앱 경로에 맞춰 수정하세요
-from products.serializers import SavingProductsSerializer, SavingOptionsSerializer
+from products.models import SavingProducts, SavingOptions, DepositOptions, DepositProducts  # 여러분의 앱 경로에 맞춰 수정하세요
+from products.serializers import SavingProductsSerializer, SavingOptionsSerializer, DepositProductsSerializer, DepositOptionsSerializer
 
 logger = logging.getLogger(__name__)
 client = OpenAI()  # settings.py에 API 키 설정 필요
@@ -22,7 +22,7 @@ class RecommendChatView(APIView):
             return Response({"detail": "메시지를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 1) DB에서 예·적금 옵션 샘플 가져와 prompt 에 포함
-        qs = SavingOptions.objects.select_related("product").all()[:30]
+        qs = DepositOptions.objects.select_related("product").all()[:30]
         options = []
         for o in qs:
             options.append({
@@ -75,10 +75,10 @@ class RecommendChatView(APIView):
                 )
 
             # 3) DB에서 실제 상품 및 옵션 불러오기
-            product = SavingProducts.objects.get(fin_prdt_cd=code)
-            prod_ser = SavingProductsSerializer(product)
-            opts = SavingOptions.objects.filter(product=product).order_by("save_trm")
-            opt_ser = SavingOptionsSerializer(opts, many=True)
+            product = DepositProducts.objects.get(fin_prdt_cd=code)
+            prod_ser = DepositProductsSerializer(product)
+            opts = DepositOptions.objects.filter(product=product).order_by("save_trm")
+            opt_ser = DepositOptionsSerializer(opts, many=True)
 
             full_product = prod_ser.data
             full_product["options"] = opt_ser.data
