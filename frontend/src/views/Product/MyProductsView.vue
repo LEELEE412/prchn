@@ -1,41 +1,77 @@
 <template>
   <div class="my-products">
     <h2>내가 가입한 상품</h2>
-    <ul v-if="myList.length">
-      <li v-for="p in myList" :key="p.id">
-        <RouterLink :to="{ name: 'ProductsDetail', params: { id: p.id } }">
-          {{ p.bank_name }} – {{ p.name }}
-        </RouterLink>
-      </li>
-    </ul>
-    <p v-else>아직 가입한 상품이 없습니다.</p>
+    
+    <div v-if="myList.length" class="products-grid">
+      <div
+        v-for="product in myList"
+        :key="product.fin_prdt_cd"
+        class="product-card"
+        @click="showProductDetail(product)"
+      >
+        <div class="product-info">
+          <h3>{{ product.kor_co_nm }}</h3>
+          <p class="product-name">{{ product.fin_prdt_nm }}</p>
+          <div class="product-details">
+            <p class="subscription-info">
+              <span class="subscription-date">가입일: {{ formatDate(product.subscription_date) }}</span>
+            </p>
+            <p class="rate-info">
+              <span class="base-rate">기본금리: {{ product.intr_rate }}%</span>
+              <span class="pref-rate">우대금리: {{ product.intr_rate2 }}%</span>
+            </p>
+            <p class="term-info">가입기간: {{ product.save_trm }}개월</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <p v-else class="no-products">아직 가입한 상품이 없습니다.</p>
+
+    <!-- 상품 상세 모달 -->
+    <ProductDetailModal
+      v-if="selectedProduct"
+      :product="selectedProduct"
+      @close="selectedProduct = null"
+    />
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
-import { useProductStore } from '@/stores/productStore'
-import { useUserStore }    from '@/stores/userStore'
+import { onMounted, ref, computed } from 'vue'
+import { useUserStore } from '@/stores/userStore'
+import ProductDetailModal from '@/components/ProductDetailModal.vue'
+import api from '@/lib/axios'
 
-const productStore = useProductStore()
-const userStore    = useUserStore()
+const userStore = useUserStore()
+const selectedProduct = ref(null)
+const subscribedProducts = ref([])
 
-onMounted(() => {
-  if (!productStore.products.length) {
-    productStore.fetchProducts()
+onMounted(async () => {
+  try {
+    // 가입한 상품 목록 가져오기
+    const response = await api.get('/accounts/profile/')
+    subscribedProducts.value = response.data.subscribed_deposit_products || []
+  } catch (err) {
+    console.error('Failed to fetch subscribed products:', err)
   }
 })
 
-const myList = computed(() =>
-  productStore.products.filter(p =>
-    userStore.subscribed.includes(p.id)
-  )
-)
+const myList = computed(() => subscribedProducts.value)
+
+function showProductDetail(product) {
+  selectedProduct.value = product
+}
+
+function formatDate(date) {
+  if (!date) return '정보 없음'
+  return new Date(date).toLocaleDateString()
+}
 </script>
 
 <style scoped>
 .my-products {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 2rem auto;
   padding: 2rem;
   background-color: #ffffff;
@@ -50,42 +86,74 @@ const myList = computed(() =>
   text-align: center;
 }
 
-.my-products ul {
-  list-style: none;
-  padding: 0;
+.products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.my-products li {
+.product-card {
   background-color: #f7f9fc;
   border: 1px solid #e0e6ed;
-  border-radius: 6px;
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.my-products li:hover {
-  transform: translateY(-2px);
+.product-card:hover {
+  transform: translateY(-4px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.my-products li a {
-  display: block;
-  padding: 1rem 1.25rem;
-  color: #333333;
+.product-info h3 {
+  color: #004080;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-name {
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
   font-weight: 500;
-  text-decoration: none;
 }
 
-.my-products li a:hover {
-  color: #0073e6;
+.product-details {
+  font-size: 0.9rem;
+  color: #666;
 }
 
-.my-products p {
+.subscription-info {
+  margin-bottom: 0.5rem;
+  color: #004080;
+  font-weight: 500;
+}
+
+.rate-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.base-rate {
+  color: #2C5282;
+}
+
+.pref-rate {
+  color: #E53E3E;
+}
+
+.term-info {
+  color: #666;
+  margin: 0;
+}
+
+.no-products {
   text-align: center;
   color: #666666;
+  font-size: 1.1rem;
   margin-top: 2rem;
+  font-style: italic;
 }
 </style>
-
