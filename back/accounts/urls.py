@@ -4,9 +4,10 @@ from .views import (
     ProfileView,
     UserDetailView,
     FollowToggleView,
-    FollowersListView,     # 추가
-    FollowingListView,     # 추가
-    
+    FollowersListView,
+    FollowingListView,
+    UserSubscriptionsListAPI,
+    UserSubscriptionDeleteAPI,
 )
 
 urlpatterns = [
@@ -16,4 +17,10 @@ urlpatterns = [
     path('users/<str:username>/follow-toggle/', FollowToggleView.as_view(), name='follow-toggle'),
     path('users/<str:username>/followers/',     FollowersListView.as_view(), name='user-followers'),
     path('users/<str:username>/following/',     FollowingListView.as_view(), name='user-following'),
+        path('subscriptions/',
+         UserSubscriptionsListAPI.as_view(),
+         name='user-subscriptions'),
+    path('subscriptions/<str:sub_type>/<str:fin_prdt_cd>/',
+         UserSubscriptionDeleteAPI.as_view(),
+         name='subscription-delete'),
 ]

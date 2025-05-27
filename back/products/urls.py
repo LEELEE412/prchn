@@ -1,18 +1,16 @@
+# products/urls.py
 from django.urls import path
 from . import views
 
+app_name = 'products'
 urlpatterns = [
-    path('', views.ProductListAPI.as_view()),                       # GET /api/v1/products/
-    path('<int:pk>/', views.ProductDetailAPI.as_view()),            # GET /api/v1/products/1/
-    # path('<int:pk>/subscribe/', views.ProductSubscribeAPI.as_view()),  # POST /api/v1/products/1/subscribe/
-    path('deposit-products/subscribe/<str:fin_prdt_cd>/', views.DepositProductSubscribeAPI.as_view()),  # POST /api/v1/products/deposit-products/subscribe/1234567890/
-    path('saving-products/subscribe/<str:fin_prdt_cd>/', views.SavingProductSubscribeAPI.as_view()),  # POST /api/v1/products/saving-products/subscribe/1234567890/
-    path('save-deposit-products/', views.save_deposit_products),
-    path('deposit-products/', views.deposit_products),
-    path('deposit-product-options/<str:fin_prdt_cd>/', views.deposit_product_options),
-    path('deposit-products/top-rate/', views.top_rate),
-    path('deposit-products-with-options/', views.deposit_products_with_options),
-    path('saving-products/', views.saving_products),
-    path('saving-save/', views.save_saving_products),
-    path('saving-products/top-rate/', views.Saving_product_options),
+    # 1) 예금 상품 목록 조회
+    path('deposit-products/', views.DepositProductsListAPI.as_view(), name='deposit-list'),
+    # 2) 예금 상품 데이터 외부 API 동기화
+    path('deposit-products/fetch/', views.DepositProductsFetchAPI.as_view(), name='deposit-fetch'),
+
+    # 3) 적금 상품 목록 조회
+    path('saving-products/', views.SavingProductsListAPI.as_view(), name='saving-list'),
+    # 4) 적금 상품 데이터 외부 API 동기화
+    path('saving-products/fetch/', views.SavingProductsFetchAPI.as_view(), name='saving-fetch'),
 ]

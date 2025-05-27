@@ -1,13 +1,13 @@
-# accounts/serializers.py
-
 import uuid
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
+from .models import UserSubscription, UserSavingSubscription
 from products.serializers import DepositProductsSerializer, SavingProductsSerializer
-from .models import UserSubscription
 
 User = get_user_model()
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """
@@ -32,43 +32,99 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserCombinedSubscriptionSerializer(serializers.Serializer):
+    """
+    deposit + saving 구독을 통합하여 반환할 때 사용합니다.
+    """
+    type = serializers.CharField()        # 'deposit' or 'saving'
+    fin_prdt_cd = serializers.CharField()
+    product_name = serializers.CharField()
+    bank_name = serializers.CharField()
+    term_months = serializers.IntegerField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    remaining_days = serializers.IntegerField()
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)
+
+
 class UserSubscriptionSerializer(serializers.ModelSerializer):
-    product_name   = serializers.CharField(source='product.fin_prdt_nm')
-    bank_name      = serializers.CharField(source='product.kor_co_nm')
+    """
+    정기예금(UserSubscription) 구독 정보를 직렬화합니다.
+    """
+    fin_prdt_cd = serializers.CharField(source='product.fin_prdt_cd', read_only=True)
+    product_name = serializers.CharField(source='product.fin_prdt_nm', read_only=True)
+    bank_name = serializers.CharField(source='product.kor_co_nm', read_only=True)
     remaining_days = serializers.SerializerMethodField()
 
     class Meta:
-        model  = UserSubscription
+        model = UserSubscription
         fields = [
-            'id', 'product_name', 'bank_name', 'term_months',
-            'start_date', 'end_date', 'remaining_days'
+            'id',
+            'fin_prdt_cd',
+            'product_name',
+            'bank_name',
+            'term_months',
+            'start_date',
+            'end_date',
+            'remaining_days',
         ]
 
     def get_remaining_days(self, obj):
         now = timezone.now()
-        if now > obj.end_date:
-            return 0
-        return (obj.end_date - now).days
+        return max(0, (obj.end_date - now).days)
+
+
+class UserSavingSubscriptionSerializer(serializers.ModelSerializer):
+    """
+    정기적금(UserSavingSubscription) 구독 정보를 직렬화합니다.
+    """
+    fin_prdt_cd = serializers.CharField(source='product.fin_prdt_cd', read_only=True)
+    product_name = serializers.CharField(source='product.fin_prdt_nm', read_only=True)
+    bank_name = serializers.CharField(source='product.kor_co_nm', read_only=True)
+    remaining_days = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserSavingSubscription
+        fields = [
+            'id',
+            'fin_prdt_cd',
+            'product_name',
+            'bank_name',
+            'term_months',
+            'start_date',
+            'end_date',
+            'remaining_days',
+        ]
+
+    def get_remaining_days(self, obj):
+        now = timezone.now()
+        return max(0, (obj.end_date - now).days)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     """
     내 프로필 조회/수정 전용 Serializer.
-    읽기 전용 필드: id, membership_number, date_joined
-    + followers_count, following_count 추가
+    읽기 전용 필드: id, membership_number, date_joined, followers/following counts
+    구독 정보는 중간 모델 직렬화기를 이용해 제공합니다.
     """
-    id                         = serializers.ReadOnlyField()
-    membership_number          = serializers.ReadOnlyField()
-    date_joined                = serializers.DateTimeField(read_only=True, format="%Y-%m-%d %H:%M")
-    followers_count            = serializers.IntegerField(source='followers.count', read_only=True)
-    following_count            = serializers.IntegerField(source='following.count', read_only=True)
-    subscribed_deposit_products = DepositProductsSerializer(many=True, read_only=True)
-    subscribed_saving_products  = SavingProductsSerializer(many=True, read_only=True)
-    active_subscriptions        = UserSubscriptionSerializer(source='subscriptions', many=True)
+    id = serializers.ReadOnlyField()
+    membership_number = serializers.ReadOnlyField()
+    date_joined = serializers.DateTimeField(read_only=True, format="%Y-%m-%d %H:%M")
+    followers_count = serializers.IntegerField(source='followers.count', read_only=True)
+    following_count = serializers.IntegerField(source='following.count', read_only=True)
+
+    active_deposit_subscriptions = UserSubscriptionSerializer(
+        source='subscriptions', many=True, read_only=True
+    )
+    active_saving_subscriptions = UserSavingSubscriptionSerializer(
+        source='saving_subscriptions', many=True, read_only=True
+    )
 
     class Meta:
-        model         = User
-        fields        = [
+        model = User
+        fields = [
             'id',
             'membership_number',
             'username',
@@ -81,9 +137,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             'salary',
             'followers_count',
             'following_count',
-            'subscribed_deposit_products',
-            'subscribed_saving_products',
-            'active_subscriptions',
+            'active_deposit_subscriptions',
+            'active_saving_subscriptions',
         ]
         read_only_fields = [
             'id',
@@ -96,13 +151,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class PublicProfileSerializer(ProfileSerializer):
     """
-    다른 회원 프로필 조회 전용 Serializer.
-    ProfileSerializer 필드 + is_following 추가
+    다른 사용자의 프로필 조회 전용.
+    is_following 필드를 추가하여 로그인 사용자와의
+    팔로우 관계 여부를 제공합니다.
     """
     is_following = serializers.SerializerMethodField()
 
     class Meta(ProfileSerializer.Meta):
-        fields           = ProfileSerializer.Meta.fields + ['is_following']
+        fields = ProfileSerializer.Meta.fields + ['is_following']
         read_only_fields = ProfileSerializer.Meta.read_only_fields + ['is_following']
 
     def get_is_following(self, obj):

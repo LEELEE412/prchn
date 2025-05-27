@@ -26,13 +26,26 @@ class DepositProductsSerializer(serializers.ModelSerializer):
 
 
 class SavingOptionsSerializer(serializers.ModelSerializer):
+    # fin_prdt_cd 는 read_only 로 뺐습니다
+    fin_prdt_cd = serializers.CharField(source='product.fin_prdt_cd', read_only=True)
+
     class Meta:
-        model = SavingOptions
-        fields = '__all__'
-        read_only_fields = ('product',)  
+        model  = SavingOptions
+        fields = [
+            'id',
+            'fin_prdt_cd',
+            'intr_rate_type_nm',
+            'intr_rate',
+            'intr_rate2',
+            'save_trm',
+        ]
+        read_only_fields = ['id', 'fin_prdt_cd']
 
 class SavingProductsSerializer(serializers.ModelSerializer):
+    # 여기에 옵션을 nested 로 붙여 줍니다
     options = SavingOptionsSerializer(many=True, read_only=True)
+
     class Meta:
-        model = SavingProducts
+        model  = SavingProducts
+        # '__all__' 쓰셔도 되고, 필요한 필드만 나열하셔도 됩니다
         fields = '__all__'
