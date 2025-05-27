@@ -1,4 +1,3 @@
-<!-- src/components/Chatbot.vue -->
 <template>
   <!-- 1) 로그인 상태일 때만 뜨는 채팅 아이콘 -->
   <div v-if="isLogin" class="chat-icon" @click="open = !open">
@@ -39,17 +38,19 @@
       v-if="selectedProduct"
       :product="selectedProduct"
       @close="selectedProduct = null"
+      @subscribe="handleSubscribe"
     />
   </teleport>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/axios'
-// <-- 경로를 정확히 components/ProductDetailModal/ProductDetailModal.vue 로 지정
 import ProductDetailModal from '@/components/ProductDetailModal/ProductDetailModal.vue'
 
+const router = useRouter()
 const store = useUserStore()
 const isLogin = computed(() => store.isLogin)
 
@@ -80,6 +81,21 @@ async function send() {
       from: 'bot',
       text: '추천 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
     })
+  }
+}
+
+async function handleSubscribe(subscriptionData) {
+  try {
+    await api.post(
+      `/products/deposit-products/subscribe/${selectedProduct.value.fin_prdt_cd}/`,
+      subscriptionData
+    )
+    selectedProduct.value = null
+    open.value = false
+    router.push('/my-products')
+  } catch (err) {
+    console.error('Subscription failed:', err)
+    alert('상품 가입 중 오류가 발생했습니다.')
   }
 }
 </script>
@@ -162,6 +178,4 @@ async function send() {
 .input-area button:hover {
   background: #3e0fcc;
 }
-
-/* 풀스크린 모달 스타일은 ProductDetailModal.vue 안에 정의되어 있습니다 */
 </style>

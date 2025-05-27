@@ -110,9 +110,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
-import api from '@/lib/axios';
 import dayjs from 'dayjs';
 
 const props = defineProps({
@@ -122,7 +120,8 @@ const props = defineProps({
   }
 });
 
-const router = useRouter();
+const emit = defineEmits(['close', 'subscribe', 'unsubscribe']);
+
 const userStore = useUserStore();
 
 // 날짜 관련 상태
@@ -156,29 +155,19 @@ function updateEndDate() {
 }
 
 // 가입하기 핸들러
-async function onSubscribe() {
-  try {
-    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
-      term_months: selectedTerm.value,
-      start_date: startDate.value,
-      end_date: endDate.value
-    });
-    router.push('/my-products');
-  } catch (err) {
-    console.error('Subscription failed:', err);
-    alert('상품 가입 중 오류가 발생했습니다.');
-  }
+function onSubscribe() {
+  if (!isValidSubscription.value) return;
+  
+  emit('subscribe', {
+    term_months: selectedTerm.value,
+    start_date: startDate.value,
+    end_date: endDate.value
+  });
 }
 
 // 가입 취소 핸들러
-async function onUnsubscribe() {
-  try {
-    await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
-    router.push('/my-products');
-  } catch (err) {
-    console.error('Unsubscribe failed:', err);
-    alert('가입 취소 중 오류가 발생했습니다.');
-  }
+function onUnsubscribe() {
+  emit('unsubscribe');
 }
 </script>
 
