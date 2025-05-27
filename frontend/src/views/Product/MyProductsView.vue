@@ -2,28 +2,59 @@
   <div class="my-products">
     <h2>내가 가입한 상품</h2>
     
-    <div v-if="subscriptions.length" class="products-grid">
-      <div
-        v-for="sub in subscriptions"
-        :key="sub.id"
-        class="product-card"
-      >
-        <div class="product-info">
-          <h3>{{ sub.bank_name }}</h3>
-          <p class="product-name">{{ sub.product_name }}</p>
-          <div class="subscription-details">
-            <p>가입기간: {{ sub.term_months }}개월</p>
-            <p>시작일: {{ formatDate(sub.start_date) }}</p>
-            <p>만기일: {{ formatDate(sub.end_date) }}</p>
-            <p class="remaining-days">
-              남은 기간: {{ sub.remaining_days }}일
-            </p>
+    <!-- 예금 상품 섹션 -->
+    <section v-if="depositSubscriptions.length" class="product-section">
+      <h3>가입한 예금 상품</h3>
+      <div class="products-grid">
+        <div
+          v-for="sub in depositSubscriptions"
+          :key="sub.id"
+          class="product-card"
+        >
+          <div class="product-info">
+            <h4>{{ sub.bank_name }}</h4>
+            <p class="product-name">{{ sub.product_name }}</p>
+            <div class="subscription-details">
+              <p>가입기간: {{ sub.term_months }}개월</p>
+              <p>시작일: {{ formatDate(sub.start_date) }}</p>
+              <p>만기일: {{ formatDate(sub.end_date) }}</p>
+              <p class="remaining-days">
+                남은 기간: {{ sub.remaining_days }}일
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- 적금 상품 섹션 -->
+    <section v-if="savingSubscriptions.length" class="product-section">
+      <h3>가입한 적금 상품</h3>
+      <div class="products-grid">
+        <div
+          v-for="sub in savingSubscriptions"
+          :key="sub.id"
+          class="product-card"
+        >
+          <div class="product-info">
+            <h4>{{ sub.bank_name }}</h4>
+            <p class="product-name">{{ sub.product_name }}</p>
+            <div class="subscription-details">
+              <p>가입기간: {{ sub.term_months }}개월</p>
+              <p>시작일: {{ formatDate(sub.start_date) }}</p>
+              <p>만기일: {{ formatDate(sub.end_date) }}</p>
+              <p class="remaining-days">
+                남은 기간: {{ sub.remaining_days }}일
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
     
-    <p v-else class="no-products">아직 가입한 상품이 없습니다.</p>
+    <p v-if="!depositSubscriptions.length && !savingSubscriptions.length" class="no-products">
+      아직 가입한 상품이 없습니다.
+    </p>
   </div>
 </template>
 
@@ -32,12 +63,21 @@ import { onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import api from '@/lib/axios'
 
-const subscriptions = ref([]);
+const depositSubscriptions = ref([]);
+const savingSubscriptions = ref([]);
 
 onMounted(async () => {
   try {
     const response = await api.get('/accounts/profile/')
-    subscriptions.value = response.data.active_subscriptions || []
+    const allSubscriptions = response.data.active_subscriptions || [];
+    
+    // 예금과 적금 상품 분리
+    depositSubscriptions.value = allSubscriptions.filter(sub => 
+      sub.product_name.includes('예금')
+    );
+    savingSubscriptions.value = allSubscriptions.filter(sub => 
+      sub.product_name.includes('적금')
+    );
   } catch (err) {
     console.error('Failed to fetch subscriptions:', err)
   }
@@ -59,10 +99,22 @@ function formatDate(date) {
 }
 
 .my-products h2 {
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  font-size: 1.75rem;
   color: #004080;
   text-align: center;
+}
+
+.product-section {
+  margin-bottom: 3rem;
+}
+
+.product-section h3 {
+  font-size: 1.4rem;
+  color: #2563eb;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
 }
 
 .products-grid {
@@ -84,7 +136,7 @@ function formatDate(date) {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.product-info h3 {
+.product-info h4 {
   color: #004080;
   font-size: 1.2rem;
   margin-bottom: 0.5rem;

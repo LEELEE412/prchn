@@ -136,9 +136,17 @@ const sortedOptions = computed(() => {
   return [...(props.product.options || [])].sort((a, b) => a.save_trm - b.save_trm);
 });
 
+// 상품 타입 판별
+const isDepositProduct = computed(() => {
+  return props.product.fin_prdt_nm.includes('예금');
+});
+
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
+  const products = isDepositProduct.value ? 
+    userStore.subscribed_deposit_products : 
+    userStore.subscribed_saving_products;
+  return products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
 });
 
 // 가입 가능 여부 체크
@@ -158,7 +166,11 @@ function updateEndDate() {
 // 가입하기 핸들러
 async function onSubscribe() {
   try {
-    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
+    const endpoint = isDepositProduct.value ? 
+      'deposit-products' : 
+      'saving-products';
+    
+    await api.post(`/products/${endpoint}/subscribe/${props.product.fin_prdt_cd}/`, {
       term_months: selectedTerm.value,
       start_date: startDate.value,
       end_date: endDate.value
@@ -173,7 +185,11 @@ async function onSubscribe() {
 // 가입 취소 핸들러
 async function onUnsubscribe() {
   try {
-    await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
+    const endpoint = isDepositProduct.value ? 
+      'deposit-products' : 
+      'saving-products';
+    
+    await api.delete(`/products/${endpoint}/subscribe/${props.product.fin_prdt_cd}/`);
     router.push('/my-products');
   } catch (err) {
     console.error('Unsubscribe failed:', err);
