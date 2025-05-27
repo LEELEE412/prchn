@@ -2,9 +2,9 @@
   <div class="my-products">
     <h2>내가 가입한 상품</h2>
     
-    <div v-if="myList.length" class="products-grid">
+    <div v-if="subscribedProducts.length" class="products-grid">
       <div
-        v-for="product in myList"
+        v-for="product in subscribedProducts"
         :key="product.fin_prdt_cd"
         class="product-card"
         @click="showProductDetail(product)"
@@ -13,12 +13,9 @@
           <h3>{{ product.kor_co_nm }}</h3>
           <p class="product-name">{{ product.fin_prdt_nm }}</p>
           <div class="product-details">
-            <p class="subscription-info">
-              <span class="subscription-date">가입일: {{ formatDate(product.subscription_date) }}</span>
-            </p>
             <p class="rate-info">
-              <span class="base-rate">기본금리: {{ product.intr_rate }}%</span>
-              <span class="pref-rate">우대금리: {{ product.intr_rate2 }}%</span>
+              <span class="base-rate">기본금리: {{ getBaseRate(product) }}%</span>
+              <span class="pref-rate">우대금리: {{ getPrefRate(product) }}%</span>
             </p>
             <p class="term-info">가입기간: {{ product.save_trm }}개월</p>
           </div>
@@ -38,7 +35,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import ProductDetailModal from '@/components/ProductDetailModal.vue'
 import api from '@/lib/axios'
@@ -49,23 +46,25 @@ const subscribedProducts = ref([])
 
 onMounted(async () => {
   try {
-    // 가입한 상품 목록 가져오기
     const response = await api.get('/accounts/profile/')
-    subscribedProducts.value = response.data.subscribed_deposit_products || []
+    if (response.data.subscribed_deposit_products) {
+      subscribedProducts.value = response.data.subscribed_deposit_products
+    }
   } catch (err) {
     console.error('Failed to fetch subscribed products:', err)
   }
 })
 
-const myList = computed(() => subscribedProducts.value)
-
 function showProductDetail(product) {
   selectedProduct.value = product
 }
 
-function formatDate(date) {
-  if (!date) return '정보 없음'
-  return new Date(date).toLocaleDateString()
+function getBaseRate(product) {
+  return product.options?.[0]?.intr_rate.toFixed(2) || '0.00'
+}
+
+function getPrefRate(product) {
+  return product.options?.[0]?.intr_rate2.toFixed(2) || '0.00'
 }
 </script>
 
@@ -122,12 +121,6 @@ function formatDate(date) {
 .product-details {
   font-size: 0.9rem;
   color: #666;
-}
-
-.subscription-info {
-  margin-bottom: 0.5rem;
-  color: #004080;
-  font-weight: 500;
 }
 
 .rate-info {
