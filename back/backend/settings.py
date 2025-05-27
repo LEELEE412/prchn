@@ -3,7 +3,10 @@
 import os
 from pathlib import Path
 import environ
-
+import openai
+from django.conf import settings
+# ── OpenAI API 키 설정 ──
+openai.api_key = os.getenv("OPENAI_API_KEY")
 # ── 프로젝트 기본 경로 설정 ──
 BASE_DIR = Path(__file__).resolve().parent.parent
 

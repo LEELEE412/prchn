@@ -17,7 +17,7 @@
           <RouterLink
             to="/bank-search"
             class="nav-link"
-            :class="{ active: $route.name === 'BankSearch' }"
+            :class="{ active: $route.name === 'ProductsList' }"
             v-if="userStore.isLogin"
           >근처 은행 검색</RouterLink>
         </li>
@@ -57,12 +57,17 @@
           <ul class="dropdown-menu">
             <li><RouterLink to="/products" class="dropdown-item">금리비교</RouterLink></li>
             <li><RouterLink to="/my-products" class="dropdown-item">내가 가입한 상품</RouterLink></li>
+            <li><RouterLink to="/all-details" class="dropdown-item">금융상품 전체 보기</RouterLink></li>
           </ul>
         </li>
       </ul>
 
       <!-- 인증 버튼 영역: 내 프로필 / 로그아웃 or 회원가입·로그인 -->
       <div class="auth-buttons d-flex align-items-center">
+          <div>
+            <!-- ... -->
+            <Chatbot />
+          </div>
         <RouterLink
           v-if="userStore.isLogin"
           to="/profile"
@@ -85,6 +90,7 @@
 
 <script setup>
 import { useUserStore } from '@/stores/userStore'
+import Chatbot from "@/components/Chatbot.vue";
 const userStore = useUserStore()
 </script>
 

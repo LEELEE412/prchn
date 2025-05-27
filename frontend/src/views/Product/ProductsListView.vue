@@ -57,7 +57,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
-import ProductDetailModal from '@/components/ProductDetailModal.vue';
+import ProductDetailModal from '@/components/ProductDetailModal/ProductDetailModal.vue';
 
 const products = ref([]);
 const selectedProduct = ref(null);

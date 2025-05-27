@@ -1,47 +1,39 @@
-import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import api from '@/lib/axios'
+import { defineStore } from 'pinia'
+import axios from 'axios'
 import { useUserStore } from './userStore'
 
 export const useProductStore = defineStore('product', () => {
   const products = ref([])
-  const detail = ref(null)
+  const detail   = ref(null)
+  const BASE_URL = 'http://127.0.0.1:8000/api/v1/products'
 
+  // 전체 상품 목록 조회
   async function fetchProducts() {
-    const res = await api.get('/api/v1/products/')
+    const res = await axios.get(`${BASE_URL}/`)
     products.value = res.data
   }
 
+  // 단일 상품 상세 조회
   async function fetchProduct(id) {
-    const res = await api.get(`/api/v1/products/${id}/`)
+    const res = await axios.get(`${BASE_URL}/${id}/`)
     detail.value = res.data
   }
 
-  async function subscribe({ productId, term }) {
+  // 가입하기: userStore.subscribe에 위임
+  async function subscribe(id) {
     const userStore = useUserStore()
     if (!userStore.isLogin) {
       alert('로그인 후 이용해주세요.')
       return
     }
     try {
-      await api.post(`/api/v1/products/${productId}/subscribe/`, { term })
-      userStore.subscribed.push(Number(productId))
+      // userStore.subscribe가 API 호출 및 localStorage 갱신을 담당합니다
+      await userStore.subscribe(id)
       alert('가입이 완료되었습니다.')
     } catch (err) {
       console.error(err)
-      throw err
-    }
-  }
-
-  async function unsubscribe(productId) {
-    const userStore = useUserStore()
-    try {
-      await api.delete(`/api/v1/products/${productId}/subscribe/`)
-      userStore.subscribed = userStore.subscribed.filter(id => id !== Number(productId))
-      alert('가입이 취소되었습니다.')
-    } catch (err) {
-      console.error(err)
-      throw err
+      alert(err.response?.data?.detail || '가입 중 오류가 발생했습니다.')
     }
   }
 
@@ -50,7 +42,6 @@ export const useProductStore = defineStore('product', () => {
     detail,
     fetchProducts,
     fetchProduct,
-    subscribe,
-    unsubscribe
+    subscribe
   }
 })

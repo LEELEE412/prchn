@@ -1,28 +1,266 @@
-// src/views/HomeView.vue
+<!-- src/views/HomeView.vue -->
 <template>
-  <div class="home-container">
-    <h1>환영합니다!</h1>
-    <p>FinTrust에 오신 것을 환영합니다.</p>
+  <div class="home-page">
+    <!-- 1. 히어로 섹션 -->
+    <section v-if="!isLogin" class="hero">
+      <div class="hero-content">
+        <h1>FinTrust</h1>
+        <p>당신의 똑똑한 금융 파트너</p>
+        <RouterLink to="/login" class="btn-primary">지금 시작하기</RouterLink>
+      </div>
+    </section>
+
+    <!-- 2. 대시보드 히어로 (로그인 후) -->
+    <section v-else class="hero dashboard">
+      <div class="hero-content">
+        <h1>환영합니다, {{ userName }}님!</h1>
+        <p>FinTrust의 다양한 기능을 만나보세요</p>
+        <div class="dash-buttons">
+          <RouterLink to="/bank-search" class="btn-outline">은행 검색</RouterLink>
+          <RouterLink to="/community"    class="btn-outline">커뮤니티</RouterLink>
+          <RouterLink to="/products"     class="btn-outline">금리 비교</RouterLink>
+          <RouterLink to="/profile"      class="btn-outline">내 정보</RouterLink>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 통합 기능 섹션 -->
+    <section class="features">
+      <h2>주요 기능</h2>
+      <div class="feature-grid">
+        <div class="feature-box">
+          <img src="@/assets/feature1.png" alt="상품 추천" />
+          <h3>AI 상품 추천</h3>
+          <p>나만의 금융 패턴을 분석해 딱 맞는 상품을 추천합니다.</p>
+        </div>
+        <div class="feature-box">
+          <img src="@/assets/feature2.png" alt="커뮤니티" />
+          <h3>커뮤니티</h3>
+          <p>질문과 꿀팁을 나누며 함께 성장하세요.</p>
+        </div>
+        <div class="feature-box">
+          <img src="@/assets/feature3.png" alt="차트 확인" />
+          <h3>차트 확인</h3>
+          <p>가입한 상품을 그래프로 한눈에 비교·분석.</p>
+        </div>
+        <div class="feature-box">
+          <img src="@/assets/feature4.png" alt="은행 검색" />
+          <h3>은행 검색</h3>
+          <p>내 위치 근처 은행의 금리와 혜택을 확인.</p>
+        </div>
+        <div class="feature-box">
+          <img src="@/assets/feature5.png" alt="현물 시세" />
+          <h3>현물 시세</h3>
+          <p>금·은 등 현물 가격을 실시간 그래프로.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 왜 FinTrust인가요? -->
+    <section class="benefits">
+      <h2>왜 FinTrust인가요?</h2>
+      <ul class="benefit-list">
+        <li>
+          <strong>데이터 보안</strong>
+          <p>은행 수준의 암호화로 개인정보를 안전하게 보호합니다.</p>
+        </li>
+        <li>
+          <strong>맞춤형 경험</strong>
+          <p>내 금융 이력을 기반으로 개인화된 추천을 제공합니다.</p>
+        </li>
+        <li>
+          <strong>멀티 디바이스 지원</strong>
+          <p>웹·모바일 어디서든 일관된 경험을 누리세요.</p>
+        </li>
+        <li>
+          <strong>24/7 고객지원</strong>
+          <p>언제든 문의하시면 빠르게 도움을 드립니다.</p>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 5. 콜투액션 -->
+    <section class="cta">
+      <RouterLink v-if="!isLogin" to="/signup" class="btn-primary">회원가입 하기</RouterLink>
+      <RouterLink v-else          to="/community" class="btn-primary">커뮤니티 둘러보기</RouterLink>
+    </section>
   </div>
 </template>
 
 <script setup>
-// 여기에 이후 기능을 추가하세요.
+import { computed, onMounted, ref } from 'vue'
+import { useUserStore } from '@/stores/userStore'
+import api from '@/lib/axios'
+
+const store   = useUserStore()
+const isLogin = computed(() => store.isLogin)
+const userName = ref('')
+
+onMounted(async () => {
+  if (isLogin.value) {
+    try {
+      const { data } = await api.get('/accounts/profile/')
+      userName.value = data.username
+    } catch {
+      userName.value = store.username || 'User'
+    }
+  }
+})
 </script>
 
 <style scoped>
-.home-container {
-  max-width: 1200px;
-  margin: 2rem auto;
-  text-align: center;
+.home-page {
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #333;
+  margin: 0; padding: 0;
 }
-.home-container h1 {
-  color: #004080;
-  font-size: 2.5rem;
+
+/* 공통 히어로 */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  background: url('@/assets/hero.jpg') center/cover no-repeat;
+  position: relative;
+}
+.hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5);
+}
+.hero-content {
+  position: relative;
+  text-align: center;
+  color: #fff;
+  padding: 2rem;
+}
+.hero-content h1 {
+  font-size: 3rem;
   margin-bottom: 1rem;
 }
-.home-container p {
-  color: #333333;
-  font-size: 1.125rem;
+.hero-content p {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* 대시보드 히어로 */
+.hero.dashboard {
+  background: #f5f7fa;
+}
+.dashboard .hero-content {
+  color: #5c16ff;
+}
+.dash-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+.btn-outline {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid #5c16ff;
+  color: #5c16ff;
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-outline:hover {
+  background: #5c16ff; color: #fff;
+}
+
+/* 버튼 공통 */
+.btn-primary {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: #5c16ff;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-primary:hover {
+  background: #3e0fcc;
+  transform: translateY(-2px);
+}
+
+/* 기능 그리드 */
+.features {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+.features h2 {
+  font-size: 2rem;
+  color: #5c16ff;
+  margin-bottom: 1.5rem;
+}
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 1.5rem;
+}
+.feature-box {
+  background: #f9f9ff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  transition: transform 0.2s;
+}
+.feature-box:hover {
+  transform: translateY(-4px);
+}
+.feature-box img {
+  width: 48px;
+  margin-bottom: 0.75rem;
+}
+.feature-box h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 왜 FinTrust */
+.benefits {
+  padding: 3rem 1rem;
+  background: #f5f7fa;
+}
+.benefits h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1.25rem;
+  color: #333;
+  text-align: center;
+}
+.benefit-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 1.25rem;
+  list-style: none;
+  padding: 0;
+}
+.benefit-list li {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.benefit-list strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #5c16ff;
+  margin-bottom: 0.5rem;
+}
+
+/* 콜투액션 */
+.cta {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: #fff;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .hero { padding: 2rem 1rem; }
+  .hero-content h1 { font-size: 2.25rem; }
 }
 </style>

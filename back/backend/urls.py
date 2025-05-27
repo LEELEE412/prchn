@@ -22,6 +22,10 @@ urlpatterns = [
     path("api/v1/community/", include(("community.urls", "community"), namespace="community")),
     path('api/v1/accounts/', include('accounts.urls')),  # 프로필 엔드포인트 추가
     path('api/v1/accounts/', include('dj_rest_auth.urls')),
+
+    # openai 챗봇 API
+    path("api/v1/chat/", include("chat.urls")),
+
 ]
 
 if settings.DEBUG:

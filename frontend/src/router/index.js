@@ -122,9 +122,11 @@ const router = createRouter({
   routes
 })
 
+// 전역 네비게이션 가드
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   if (to.meta.requiresAuth && !userStore.isLogin) {
+    // 로그인 안 된 상태에서 상세조회(구독) 접근 시 로그인 페이지로
     next({ name: 'LogInView' })
   } else {
     next()

@@ -1,19 +1,19 @@
+// frontend/src/stores/userStore.js
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import api from "@/lib/axios";
 
 export const useUserStore = defineStore("user", () => {
-  const token = ref(localStorage.getItem("token") || "");
-  const userId = ref(localStorage.getItem("userId") || null);
+  const token    = ref(localStorage.getItem("token") || "");
+  const userId   = ref(localStorage.getItem("userId") || null);
   const username = ref(localStorage.getItem("username") || "");
-  const subscribed_deposit_products = ref([]);
-  const subscribed_saving_products = ref([]);
 
-  const isLogin = computed(() => !!token.value)
+const isLogin  = computed(() => !!token.value)
 
   function _saveToken(t) {
     token.value = t;
     localStorage.setItem("token", t);
+    console.log('[userStore] saved token:', t);  // ← 로그인 직후 찍히는지 확인
   }
   function _saveUserId(id) {
     userId.value = id;
@@ -28,23 +28,20 @@ export const useUserStore = defineStore("user", () => {
     token.value = "";
     userId.value = null;
     username.value = "";
-    subscribed_deposit_products.value = [];
-    subscribed_saving_products.value = [];
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
   }
 
   async function logIn({ username: u, password }) {
+    // DRF 기본 토큰 발급
     const res = await api.post("/api-token-auth/", { username: u, password });
     _saveToken(res.data.token);
 
-    const me = await api.get("/accounts/profile/");
+    // 내 정보 조회
+    const me = await api.get("/accounts/user/");
     _saveUserId(me.data.pk ?? me.data.id);
     _saveUsername(me.data.username);
-    
-    subscribed_deposit_products.value = me.data.subscribed_deposit_products || [];
-    subscribed_saving_products.value = me.data.subscribed_saving_products || [];
   }
 
   async function signUp(payload) {
@@ -59,11 +56,14 @@ export const useUserStore = defineStore("user", () => {
     token,
     userId,
     username,
-    subscribed_deposit_products,
-    subscribed_saving_products,
     isLogin,
     logIn,
     signUp,
     logOut,
   };
+}, {
+  persist: {
+    key: "user",
+    paths: ["token", "userId", "username"],
+  },
 });
