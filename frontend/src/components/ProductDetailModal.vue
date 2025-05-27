@@ -33,6 +33,36 @@
           </table>
         </div>
 
+        <!-- 가입 기간 선택 -->
+        <div v-if="userStore.isLogin && !isSubscribed" class="date-selection">
+          <h4>가입 기간 선택</h4>
+          <div class="date-inputs">
+            <div class="form-group">
+              <label>시작일</label>
+              <input 
+                type="date" 
+                v-model="startDate"
+                :min="today"
+                @change="updateEndDate"
+              />
+            </div>
+            <div class="form-group">
+              <label>가입 기간</label>
+              <select v-model="selectedTerm" @change="updateEndDate">
+                <option v-for="option in sortedOptions" 
+                        :key="option.save_trm" 
+                        :value="option.save_trm">
+                  {{ option.save_trm }}개월
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>만기일</label>
+              <input type="date" v-model="endDate" disabled />
+            </div>
+          </div>
+        </div>
+
         <!-- 상품 상세 정보 -->
         <div class="product-details">
           <div class="detail-section">
@@ -62,6 +92,7 @@
             v-if="userStore.isLogin && !isSubscribed"
             class="subscribe-btn"
             @click="onSubscribe"
+            :disabled="!isValidSubscription"
           >가입하기</button>
           <button 
             v-else-if="userStore.isLogin && isSubscribed"
@@ -78,10 +109,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import api from '@/lib/axios';
+import dayjs from 'dayjs';
 
 const props = defineProps({
   product: {
@@ -93,6 +125,12 @@ const props = defineProps({
 const router = useRouter();
 const userStore = useUserStore();
 
+// 날짜 관련 상태
+const today = dayjs().format('YYYY-MM-DD');
+const startDate = ref(today);
+const endDate = ref('');
+const selectedTerm = ref(null);
+
 // 가입기간 순으로 정렬된 옵션
 const sortedOptions = computed(() => {
   return [...(props.product.options || [])].sort((a, b) => a.save_trm - b.save_trm);
@@ -103,10 +141,28 @@ const isSubscribed = computed(() => {
   return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
 });
 
+// 가입 가능 여부 체크
+const isValidSubscription = computed(() => {
+  return startDate.value && endDate.value && selectedTerm.value;
+});
+
+// 종료일 자동 계산
+function updateEndDate() {
+  if (startDate.value && selectedTerm.value) {
+    endDate.value = dayjs(startDate.value)
+      .add(selectedTerm.value, 'month')
+      .format('YYYY-MM-DD');
+  }
+}
+
 // 가입하기 핸들러
 async function onSubscribe() {
   try {
-    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
+    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
+      term_months: selectedTerm.value,
+      start_date: startDate.value,
+      end_date: endDate.value
+    });
     router.push('/my-products');
   } catch (err) {
     console.error('Subscription failed:', err);
@@ -210,6 +266,49 @@ async function onUnsubscribe() {
   color: #334155;
 }
 
+.date-selection {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.date-selection h4 {
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.date-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
 .product-details {
   margin-top: 2rem;
 }
@@ -251,7 +350,12 @@ async function onUnsubscribe() {
   color: #fff;
 }
 
-.subscribe-btn:hover {
+.subscribe-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.subscribe-btn:not(:disabled):hover {
   background-color: #005bb5;
 }
 
