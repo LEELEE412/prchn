@@ -2,22 +2,22 @@
   <div class="my-products">
     <h2>내가 가입한 상품</h2>
     
-    <div v-if="subscribedProducts.length" class="products-grid">
+    <div v-if="subscriptions.length" class="products-grid">
       <div
-        v-for="product in subscribedProducts"
-        :key="product.fin_prdt_cd"
+        v-for="sub in subscriptions"
+        :key="sub.id"
         class="product-card"
-        @click="showProductDetail(product)"
       >
         <div class="product-info">
-          <h3>{{ product.kor_co_nm }}</h3>
-          <p class="product-name">{{ product.fin_prdt_nm }}</p>
-          <div class="product-details">
-            <p class="rate-info">
-              <span class="base-rate">기본금리: {{ getBaseRate(product) }}%</span>
-              <span class="pref-rate">우대금리: {{ getPrefRate(product) }}%</span>
+          <h3>{{ sub.bank_name }}</h3>
+          <p class="product-name">{{ sub.product_name }}</p>
+          <div class="subscription-details">
+            <p>가입기간: {{ sub.term_months }}개월</p>
+            <p>시작일: {{ formatDate(sub.start_date) }}</p>
+            <p>만기일: {{ formatDate(sub.end_date) }}</p>
+            <p class="remaining-days">
+              남은 기간: {{ sub.remaining_days }}일
             </p>
-            <p class="term-info">가입기간: {{ product.save_trm }}개월</p>
           </div>
         </div>
       </div>
@@ -47,24 +47,14 @@ const subscribedProducts = ref([])
 onMounted(async () => {
   try {
     const response = await api.get('/accounts/profile/')
-    if (response.data.subscribed_deposit_products) {
-      subscribedProducts.value = response.data.subscribed_deposit_products
-    }
+    subscriptions.value = response.data.active_subscriptions
   } catch (err) {
-    console.error('Failed to fetch subscribed products:', err)
+    console.error('Failed to fetch subscriptions:', err)
   }
 })
 
-function showProductDetail(product) {
-  selectedProduct.value = product
-}
-
-function getBaseRate(product) {
-  return product.options?.[0]?.intr_rate.toFixed(2) || '0.00'
-}
-
-function getPrefRate(product) {
-  return product.options?.[0]?.intr_rate2.toFixed(2) || '0.00'
+function formatDate(date) {
+  return dayjs(date).format('YYYY-MM-DD')
 }
 </script>
 
@@ -148,5 +138,22 @@ function getPrefRate(product) {
   font-size: 1.1rem;
   margin-top: 2rem;
   font-style: italic;
+}
+
+.subscription-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e6ed;
+}
+
+.subscription-details p {
+  margin: 0.25rem 0;
+  color: #666;
+}
+
+.remaining-days {
+  font-weight: 500;
+  color: #004080 !important;
+  margin-top: 0.5rem !important;
 }
 </style>
