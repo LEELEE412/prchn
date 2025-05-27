@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from products.serializers import DepositProductsSerializer, SavingProductsSerializer
+from .models import User, UserSubscription
 import uuid
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -26,6 +29,24 @@ class RegistrationSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+class UserSubscriptionSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.fin_prdt_nm')
+    bank_name = serializers.CharField(source='product.kor_co_nm')
+    remaining_days = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserSubscription
+        fields = [
+            'id', 'product_name', 'bank_name', 'term_months',
+            'start_date', 'end_date', 'remaining_days'
+        ]
+    
+    def get_remaining_days(self, obj):
+        now = timezone.now()
+        if now > obj.end_date:
+            return 0
+        return (obj.end_date - now).days
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     """
@@ -38,6 +59,10 @@ class ProfileSerializer(serializers.ModelSerializer):
     date_joined = serializers.DateTimeField(read_only=True, format="%Y-%m-%d %H:%M")
     followers_count = serializers.IntegerField(source='followers.count', read_only=True)
     following_count = serializers.IntegerField(source='following.count', read_only=True)
+    subscribed_deposit_products = DepositProductsSerializer(many=True, read_only=True)
+    active_subscriptions = UserSubscriptionSerializer(source='subscriptions', many=True)
+    subscribed_saving_products = SavingProductsSerializer(many=True, read_only=True)
+
 
     class Meta:
         model = User
@@ -54,6 +79,9 @@ class ProfileSerializer(serializers.ModelSerializer):
             'salary',
             'followers_count',
             'following_count',
+            'subscribed_deposit_products',
+            'subscribed_saving_products',
+            'active_subscriptions',
         ]
         read_only_fields = [
             'id',

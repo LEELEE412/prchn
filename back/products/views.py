@@ -36,9 +36,27 @@ class DepositProductSubscribeAPI(generics.GenericAPIView):
     lookup_url_kwarg = 'fin_prdt_cd'
 
     def post(self, request, fin_prdt_cd):
-        depo = self.get_object()
-        request.user.subscribed_deposit_products.add(depo)
-        return Response({'detail': '예금상품 구독 완료'}, status=status.HTTP_200_OK)
+        product = self.get_object()
+        term_months = request.data.get('term_months')
+        
+        if not term_months:
+            return Response(
+                {'error': '가입 기간을 선택해주세요'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        UserSubscription.objects.create(
+            user=request.user,
+            product=product,
+            term_months=term_months
+        )
+        
+        return Response({'detail': '상품 가입이 완료되었습니다'})
+    
+    def delete(self, request, fin_prdt_cd):
+        product = self.get_object()
+        request.user.subscribed_deposit_products.remove(product)
+        return Response({'detail': '구독 취소 완료'})
 
 class SavingProductSubscribeAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]

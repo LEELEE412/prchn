@@ -2,6 +2,7 @@ import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from products.models import DepositOptions, DepositProducts, SavingProducts
+from django.utils import timezone
 
 
 def generate_membership_number():
@@ -9,6 +10,18 @@ def generate_membership_number():
     Generate a unique 20-character membership number using UUID4.
     """
     return uuid.uuid4().hex[:20]
+
+class UserSubscription(models.Model):
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='subscriptions')
+    product = models.ForeignKey('products.DepositProducts', on_delete=models.CASCADE)
+    term_months = models.IntegerField()
+    start_date = models.DateTimeField(default=timezone.now)
+    end_date = models.DateTimeField()
+    
+    def save(self, *args, **kwargs):
+        if not self.end_date:
+            self.end_date = self.start_date + timezone.timedelta(days=self.term_months * 30)
+        super().save(*args, **kwargs)
 
 
 class User(AbstractUser):
@@ -52,3 +65,7 @@ class User(AbstractUser):
         related_name='following',
         blank=True,
     )
+    @property
+    def active_subscriptions(self):
+        now = timezone.now()
+        return self.subscriptions.filter(end_date__gt=now)

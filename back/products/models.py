@@ -76,3 +76,6 @@ class SavingOptions(models.Model):
 
     def __str__(self):
         return f"{self.fin_prdt_cd} - {self.save_trm}개월"
+    
+
+
