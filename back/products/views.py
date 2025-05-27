@@ -1,15 +1,14 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import Product,DepositProducts, DepositOptions, SavingProducts, SavingOptions
+from .models import Product, DepositProducts, DepositOptions, SavingProducts, SavingOptions
 from accounts.models import UserSubscription
-from .serializers import ProductSerializer,DepositProductsSerializer, DepositOptionsSerializer, SavingProductsSerializer, SavingOptionsSerializer
+from .serializers import ProductSerializer, DepositProductsSerializer, DepositOptionsSerializer, SavingProductsSerializer, SavingOptionsSerializer
 import requests
 from django.conf import settings
 from rest_framework.decorators import api_view
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django.utils import timezone
 from datetime import datetime
-
 
 # 전체 조회
 class ProductListAPI(generics.ListAPIView):
@@ -39,10 +38,6 @@ class DepositProductSubscribeAPI(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-        # 1) M2M 관계 추가
-        request.user.subscribed_deposit_products.add(product)
-        
-        # 2) 구독 정보 생성
         UserSubscription.objects.create(
             user=request.user,
             product=product,
@@ -51,11 +46,10 @@ class DepositProductSubscribeAPI(generics.GenericAPIView):
             end_date=datetime.fromisoformat(end_date.replace('Z', '+00:00'))
         )
         
-        return Response({'detail': '상품 가입이 완료되었습니다'})
-    
+        return Response({'detail': '예금상품 가입이 완료되었습니다'})
+
     def delete(self, request, fin_prdt_cd):
         product = self.get_object()
-        request.user.subscribed_deposit_products.remove(product)
         UserSubscription.objects.filter(
             user=request.user,
             product=product
@@ -80,10 +74,6 @@ class SavingProductSubscribeAPI(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-        # 1) M2M 관계 추가
-        request.user.subscribed_saving_products.add(product)
-        
-        # 2) 구독 정보 생성
         UserSubscription.objects.create(
             user=request.user,
             product=product,
@@ -96,13 +86,11 @@ class SavingProductSubscribeAPI(generics.GenericAPIView):
 
     def delete(self, request, fin_prdt_cd):
         product = self.get_object()
-        request.user.subscribed_saving_products.remove(product)
         UserSubscription.objects.filter(
             user=request.user,
             product=product
         ).delete()
         return Response({'detail': '구독 취소 완료'})
-
 
 @api_view(['GET'])
 def save_deposit_products(request):
@@ -147,7 +135,6 @@ def save_deposit_products(request):
         status=status.HTTP_201_CREATED
     )
 
-
 @api_view(['GET', 'POST'])
 def deposit_products(request):
     if request.method == 'GET':
@@ -176,7 +163,6 @@ def deposit_product_options(request, fin_prdt_cd):
     options = get_list_or_404(DepositOptions, fin_prdt_cd=fin_prdt_cd)
     serializer = DepositOptionsSerializer(options, many=True)
     return Response(serializer.data)
-
 
 @api_view(['GET'])
 def top_rate(request):
@@ -242,7 +228,6 @@ def save_saving_products(request):
 
     return Response({"message": "OK"}, status=status.HTTP_201_CREATED)
 
-
 @api_view(["GET", "POST"])
 def saving_products(request):
     if request.method == "GET":
@@ -268,7 +253,6 @@ def saving_products(request):
             {"error": f"유효하지않은 정보. 저장되지 않았습니다."},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
 
 @api_view(["GET"])
 def Saving_product_options(request, fin_prdt_cd):
