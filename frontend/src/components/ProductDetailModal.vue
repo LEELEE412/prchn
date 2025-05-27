@@ -56,24 +56,7 @@
           </div>
         </div>
 
-        <!-- 가입 기간 선택 -->
-        <div v-if="userStore.isLogin && !isSubscribed" class="subscription-form">
-          <h4>가입 기간 선택</h4>
-          <select v-model="selectedTerm" class="term-select">
-            <option value="">가입 기간을 선택하세요</option>
-            <option 
-              v-for="option in sortedOptions" 
-              :key="option.save_trm" 
-              :value="option.save_trm"
-            >
-              {{ option.save_trm }}개월 
-              (기본 {{ option.intr_rate }}% / 우대 {{ option.intr_rate2 }}%)
-              
-            </option>
-          </select>
-        </div>
-
-        <!-- 가입/취소 버튼 -->
+        <!-- 가입하기 버튼 영역 -->
         <div class="action-area">
           <button
             v-if="userStore.isLogin && !isSubscribed"
@@ -95,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import api from '@/lib/axios';

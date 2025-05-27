@@ -6,7 +6,8 @@ export const useUserStore = defineStore("user", () => {
   const token = ref(localStorage.getItem("token") || "");
   const userId = ref(localStorage.getItem("userId") || null);
   const username = ref(localStorage.getItem("username") || "");
-  const subscribed = ref([]);
+  const subscribed_deposit_products = ref([]);
+  const subscribed_saving_products = ref([]);
 
   const isLogin = computed(() => !!token.value)
 
@@ -27,7 +28,8 @@ export const useUserStore = defineStore("user", () => {
     token.value = "";
     userId.value = null;
     username.value = "";
-    subscribed.value = [];
+    subscribed_deposit_products.value = [];
+    subscribed_saving_products.value = [];
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
@@ -41,9 +43,8 @@ export const useUserStore = defineStore("user", () => {
     _saveUserId(me.data.pk ?? me.data.id);
     _saveUsername(me.data.username);
     
-    // 구독 정보 로드
-    const products = await api.get("/api/v1/products/");
-    subscribed.value = products.data.filter(p => p.is_subscribed).map(p => p.id);
+    subscribed_deposit_products.value = me.data.subscribed_deposit_products || [];
+    subscribed_saving_products.value = me.data.subscribed_saving_products || [];
   }
 
   async function signUp(payload) {
@@ -58,7 +59,8 @@ export const useUserStore = defineStore("user", () => {
     token,
     userId,
     username,
-    subscribed,
+    subscribed_deposit_products,
+    subscribed_saving_products,
     isLogin,
     logIn,
     signUp,

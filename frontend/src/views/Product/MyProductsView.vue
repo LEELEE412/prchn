@@ -24,30 +24,20 @@
     </div>
     
     <p v-else class="no-products">아직 가입한 상품이 없습니다.</p>
-
-    <!-- 상품 상세 모달 -->
-    <ProductDetailModal
-      v-if="selectedProduct"
-      :product="selectedProduct"
-      @close="selectedProduct = null"
-    />
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { useUserStore } from '@/stores/userStore'
-import ProductDetailModal from '@/components/ProductDetailModal.vue'
+import dayjs from 'dayjs'
 import api from '@/lib/axios'
 
-const userStore = useUserStore()
-const selectedProduct = ref(null)
-const subscribedProducts = ref([])
+const subscriptions = ref([]);
 
 onMounted(async () => {
   try {
     const response = await api.get('/accounts/profile/')
-    subscriptions.value = response.data.active_subscriptions
+    subscriptions.value = response.data.active_subscriptions || []
   } catch (err) {
     console.error('Failed to fetch subscriptions:', err)
   }
@@ -86,7 +76,6 @@ function formatDate(date) {
   border: 1px solid #e0e6ed;
   border-radius: 8px;
   padding: 1.5rem;
-  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -108,38 +97,6 @@ function formatDate(date) {
   font-weight: 500;
 }
 
-.product-details {
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.rate-info {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.base-rate {
-  color: #2C5282;
-}
-
-.pref-rate {
-  color: #E53E3E;
-}
-
-.term-info {
-  color: #666;
-  margin: 0;
-}
-
-.no-products {
-  text-align: center;
-  color: #666666;
-  font-size: 1.1rem;
-  margin-top: 2rem;
-  font-style: italic;
-}
-
 .subscription-details {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -155,5 +112,13 @@ function formatDate(date) {
   font-weight: 500;
   color: #004080 !important;
   margin-top: 0.5rem !important;
+}
+
+.no-products {
+  text-align: center;
+  color: #666666;
+  font-size: 1.1rem;
+  margin-top: 2rem;
+  font-style: italic;
 }
 </style>
