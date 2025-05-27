@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="my-products">
     <h2>내가 가입한 상품</h2>
@@ -10,6 +11,7 @@
           v-for="sub in depositSubscriptions"
           :key="sub.id"
           class="product-card"
+          @click="showSubscriptionDetail(sub)"
         >
           <div class="product-info">
             <h4>{{ sub.bank_name }}</h4>
@@ -35,6 +37,7 @@
           v-for="sub in savingSubscriptions"
           :key="sub.id"
           class="product-card"
+          @click="showSubscriptionDetail(sub)"
         >
           <div class="product-info">
             <h4>{{ sub.bank_name }}</h4>
@@ -55,6 +58,14 @@
     <p v-if="!depositSubscriptions.length && !savingSubscriptions.length" class="no-products">
       아직 가입한 상품이 없습니다.
     </p>
+
+    <!-- 구독 상세 모달 -->
+    <SubscriptionDetailModal
+      v-if="selectedSubscription"
+      :subscription="selectedSubscription"
+      @close="selectedSubscription = null"
+      @cancelled="loadSubscriptions"
+    />
   </div>
 </template>
 
@@ -62,11 +73,13 @@
 import { onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import api from '@/lib/axios'
+import SubscriptionDetailModal from '@/components/ProductDetailModal/SubscriptionDetailModal.vue'
 
 const depositSubscriptions = ref([]);
 const savingSubscriptions = ref([]);
+const selectedSubscription = ref(null);
 
-onMounted(async () => {
+async function loadSubscriptions() {
   try {
     const response = await api.get('/accounts/profile/')
     const allSubscriptions = response.data.active_subscriptions || [];
@@ -81,11 +94,17 @@ onMounted(async () => {
   } catch (err) {
     console.error('Failed to fetch subscriptions:', err)
   }
-})
+}
+
+function showSubscriptionDetail(subscription) {
+  selectedSubscription.value = subscription;
+}
 
 function formatDate(date) {
   return dayjs(date).format('YYYY-MM-DD')
 }
+
+onMounted(loadSubscriptions)
 </script>
 
 <style scoped>
@@ -129,6 +148,7 @@ function formatDate(date) {
   border-radius: 8px;
   padding: 1.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
 }
 
 .product-card:hover {
@@ -174,3 +194,4 @@ function formatDate(date) {
   font-style: italic;
 }
 </style>
+```
