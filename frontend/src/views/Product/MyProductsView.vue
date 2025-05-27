@@ -2,28 +2,68 @@
   <div class="my-products">
     <h2>내가 가입한 상품</h2>
     
-    <div v-if="subscriptions.length" class="products-grid">
-      <div
-        v-for="sub in subscriptions"
-        :key="sub.id"
-        class="product-card"
-      >
-        <div class="product-info">
-          <h3>{{ sub.bank_name }}</h3>
-          <p class="product-name">{{ sub.product_name }}</p>
-          <div class="subscription-details">
-            <p>가입기간: {{ sub.term_months }}개월</p>
-            <p>시작일: {{ formatDate(sub.start_date) }}</p>
-            <p>만기일: {{ formatDate(sub.end_date) }}</p>
-            <p class="remaining-days">
-              남은 기간: {{ sub.remaining_days }}일
-            </p>
+    <!-- 예금 상품 섹션 -->
+    <div v-if="depositProducts.length" class="product-section">
+      <h3>예금 상품</h3>
+      <div class="products-grid">
+        <div
+          v-for="product in depositProducts"
+          :key="product.fin_prdt_cd"
+          class="product-card"
+        >
+          <div class="product-info">
+            <h4>{{ product.kor_co_nm }}</h4>
+            <p class="product-name">{{ product.fin_prdt_nm }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 적금 상품 섹션 -->
+    <div v-if="savingProducts.length" class="product-section">
+      <h3>적금 상품</h3>
+      <div class="products-grid">
+        <div
+          v-for="product in savingProducts"
+          :key="product.fin_prdt_cd"
+          class="product-card"
+        >
+          <div class="product-info">
+            <h4>{{ product.kor_co_nm }}</h4>
+            <p class="product-name">{{ product.fin_prdt_nm }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 가입된 상품 상세 정보 -->
+    <div v-if="subscriptions.length" class="subscriptions-section">
+      <h3>가입 상세 정보</h3>
+      <div class="products-grid">
+        <div
+          v-for="sub in subscriptions"
+          :key="sub.id"
+          class="product-card"
+        >
+          <div class="product-info">
+            <h4>{{ sub.bank_name }}</h4>
+            <p class="product-name">{{ sub.product_name }}</p>
+            <div class="subscription-details">
+              <p>가입기간: {{ sub.term_months }}개월</p>
+              <p>시작일: {{ formatDate(sub.start_date) }}</p>
+              <p>만기일: {{ formatDate(sub.end_date) }}</p>
+              <p class="remaining-days">
+                남은 기간: {{ sub.remaining_days }}일
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
     
-    <p v-else class="no-products">아직 가입한 상품이 없습니다.</p>
+    <p v-if="!depositProducts.length && !savingProducts.length && !subscriptions.length" class="no-products">
+      아직 가입한 상품이 없습니다.
+    </p>
   </div>
 </template>
 
@@ -32,14 +72,18 @@ import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import api from '@/lib/axios'
 
-const subscriptions = ref([]);
+const depositProducts = ref([])
+const savingProducts = ref([])
+const subscriptions = ref([])
 
 onMounted(async () => {
   try {
-    const response = await api.get('/accounts/profile/')
-    subscriptions.value = response.data.active_subscriptions || []
+    const { data } = await api.get('/accounts/profile/')
+    depositProducts.value = data.subscribed_deposit_products || []
+    savingProducts.value = data.subscribed_saving_products || []
+    subscriptions.value = data.active_subscriptions || []
   } catch (err) {
-    console.error('Failed to fetch subscriptions:', err)
+    console.error('Failed to fetch products:', err)
   }
 })
 
@@ -59,10 +103,22 @@ function formatDate(date) {
 }
 
 .my-products h2 {
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  font-size: 1.75rem;
   color: #004080;
   text-align: center;
+}
+
+.product-section {
+  margin-bottom: 2rem;
+}
+
+.product-section h3 {
+  color: #004080;
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e0e6ed;
 }
 
 .products-grid {
@@ -84,7 +140,7 @@ function formatDate(date) {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.product-info h3 {
+.product-info h4 {
   color: #004080;
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
@@ -120,5 +176,9 @@ function formatDate(date) {
   font-size: 1.1rem;
   margin-top: 2rem;
   font-style: italic;
+}
+
+.subscriptions-section {
+  margin-top: 3rem;
 }
 </style>
