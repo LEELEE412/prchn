@@ -38,16 +38,18 @@ class DepositProductSubscribeAPI(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
+        content_type = ContentType.objects.get_for_model(DepositProducts)
         UserSubscription.objects.create(
             user=request.user,
-            product=product,
+            content_type=content_type,
+            object_id=product.id,
             term_months=term_months,
-            start_date=datetime.fromisoformat(start_date.replace('Z', '+00:00')),
-            end_date=datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            start_date=datetime.fromisoformat(start_date.replace('Z', '+08:00')),
+            end_date=datetime.fromisoformat(end_date.replace('Z', '+08:00'))
         )
-        
+        request.user.subscribed_deposit_products.add(product)
         return Response({'detail': '예금상품 가입이 완료되었습니다'})
-
+        
     def delete(self, request, fin_prdt_cd):
         product = self.get_object()
         UserSubscription.objects.filter(
@@ -74,16 +76,18 @@ class SavingProductSubscribeAPI(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
+        content_type = ContentType.objects.get_for_model(SavingProducts)
         UserSubscription.objects.create(
             user=request.user,
-            product=product,
+            content_type=content_type,
+            object_id=product.id,
             term_months=term_months,
             start_date=datetime.fromisoformat(start_date.replace('Z', '+00:00')),
             end_date=datetime.fromisoformat(end_date.replace('Z', '+00:00'))
         )
-        
+        request.user.subscribed_saving_products.add(product)
         return Response({'detail': '적금상품 가입이 완료되었습니다'})
-
+    
     def delete(self, request, fin_prdt_cd):
         product = self.get_object()
         UserSubscription.objects.filter(
