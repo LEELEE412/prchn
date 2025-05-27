@@ -7,7 +7,8 @@ import requests
 from django.conf import settings
 from rest_framework.decorators import api_view
 from django.shortcuts import get_list_or_404, get_object_or_404
-
+from django.utils import timezone
+from datetime import datetime
 
 
 # 전체 조회
@@ -20,16 +21,6 @@ class ProductDetailAPI(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
-# # 가입하기 (로그인 필요)
-# class ProductSubscribeAPI(generics.GenericAPIView):
-#     permission_classes = [permissions.IsAuthenticated]
-#     queryset = Product.objects.all()
-
-#     def post(self, request, pk):
-#         product = self.get_object()
-#         request.user.subscribed.add(product)  # User.subscribed M2M 필드
-#         return Response({'detail': '가입 완료'}, status=status.HTTP_200_OK)
-
 class DepositProductSubscribeAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = DepositProducts.objects.all()
@@ -39,17 +30,25 @@ class DepositProductSubscribeAPI(generics.GenericAPIView):
     def post(self, request, fin_prdt_cd):
         product = self.get_object()
         term_months = request.data.get('term_months')
+        start_date = request.data.get('start_date')
+        end_date = request.data.get('end_date')
         
-        if not term_months:
+        if not all([term_months, start_date, end_date]):
             return Response(
-                {'error': '가입 기간을 선택해주세요'},
+                {'error': '필수 정보가 누락되었습니다'},
                 status=status.HTTP_400_BAD_REQUEST
             )
             
+        # 1) M2M 관계 추가
+        request.user.subscribed_deposit_products.add(product)
+        
+        # 2) 구독 정보 생성
         UserSubscription.objects.create(
             user=request.user,
             product=product,
-            term_months=term_months
+            term_months=term_months,
+            start_date=datetime.fromisoformat(start_date.replace('Z', '+00:00')),
+            end_date=datetime.fromisoformat(end_date.replace('Z', '+00:00'))
         )
         
         return Response({'detail': '상품 가입이 완료되었습니다'})
@@ -57,6 +56,10 @@ class DepositProductSubscribeAPI(generics.GenericAPIView):
     def delete(self, request, fin_prdt_cd):
         product = self.get_object()
         request.user.subscribed_deposit_products.remove(product)
+        UserSubscription.objects.filter(
+            user=request.user,
+            product=product
+        ).delete()
         return Response({'detail': '구독 취소 완료'})
 
 class SavingProductSubscribeAPI(generics.GenericAPIView):
@@ -66,17 +69,43 @@ class SavingProductSubscribeAPI(generics.GenericAPIView):
     lookup_url_kwarg = 'fin_prdt_cd'
 
     def post(self, request, fin_prdt_cd):
-        save = self.get_object()
-        request.user.subscribed_saving_products.add(save)
-        return Response({'detail': '적금상품 구독 완료'}, status=status.HTTP_200_OK)
+        product = self.get_object()
+        term_months = request.data.get('term_months')
+        start_date = request.data.get('start_date')
+        end_date = request.data.get('end_date')
+        
+        if not all([term_months, start_date, end_date]):
+            return Response(
+                {'error': '필수 정보가 누락되었습니다'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # 1) M2M 관계 추가
+        request.user.subscribed_saving_products.add(product)
+        
+        # 2) 구독 정보 생성
+        UserSubscription.objects.create(
+            user=request.user,
+            product=product,
+            term_months=term_months,
+            start_date=datetime.fromisoformat(start_date.replace('Z', '+00:00')),
+            end_date=datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        )
+        
+        return Response({'detail': '적금상품 가입이 완료되었습니다'})
+
+    def delete(self, request, fin_prdt_cd):
+        product = self.get_object()
+        request.user.subscribed_saving_products.remove(product)
+        UserSubscription.objects.filter(
+            user=request.user,
+            product=product
+        ).delete()
+        return Response({'detail': '구독 취소 완료'})
 
 
 @api_view(['GET'])
 def save_deposit_products(request):
-
-    # if DepositOptions.objects.exists():
-    #     return Response({'message':'DB에 이미 데이터가 있습니다.'},status=status.HTTP_400_BAD_REQUEST)
-
     url = (
         f"https://finlife.fss.or.kr/finlifeapi/"
         f"depositProductsSearch.json?auth={settings.FINLIFE_API_KEY}"
@@ -171,10 +200,6 @@ def deposit_products_with_options(request):
 
 @api_view(["GET"])
 def save_saving_products(request):
-
-    # if DepositOptions.objects.exists():
-    #     return Response({'message':'DB에 이미 데이터가 있습니다.'},status=status.HTTP_400_BAD_REQUEST)
-
     url = (
         f"https://finlife.fss.or.kr/finlifeapi/"
         f"savingProductsSearch.json?auth={settings.FINLIFE_API_KEY}"

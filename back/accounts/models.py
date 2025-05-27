@@ -51,7 +51,7 @@ class User(AbstractUser):
         blank=True,
         verbose_name='가입한 정기예금 상품'
     )
-    subscirbed_saving_products = models.ManyToManyField(
+    subscribed_saving_products = models.ManyToManyField(
         'products.SavingProducts',
         related_name='subscribers',
         blank=True,
