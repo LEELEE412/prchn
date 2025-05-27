@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
@@ -189,4 +188,3 @@ async function cancelSubscription() {
   background: #b91c1c;
 }
 </style>
-```
