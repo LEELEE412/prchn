@@ -122,6 +122,7 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['close', 'subscribe']);
 const router = useRouter();
 const userStore = useUserStore();
 
@@ -138,7 +139,11 @@ const sortedOptions = computed(() => {
 
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
+  if (props.product.fin_prdt_cd) {
+    return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd) ||
+           userStore.subscribed_saving_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
+  }
+  return false;
 });
 
 // 가입 가능 여부 체크
@@ -157,12 +162,20 @@ function updateEndDate() {
 
 // 가입하기 핸들러
 async function onSubscribe() {
+  const subscriptionData = {
+    term_months: selectedTerm.value,
+    start_date: startDate.value,
+    end_date: endDate.value
+  };
+
   try {
-    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
-      term_months: selectedTerm.value,
-      start_date: startDate.value,
-      end_date: endDate.value
-    });
+    if (props.product.fin_prdt_cd.startsWith('S')) {
+      // 적금 상품
+      await api.post(`/products/saving-products/subscribe/${props.product.fin_prdt_cd}/`, subscriptionData);
+    } else {
+      // 예금 상품
+      emit('subscribe', subscriptionData);
+    }
     router.push('/my-products');
   } catch (err) {
     console.error('Subscription failed:', err);
@@ -173,7 +186,11 @@ async function onSubscribe() {
 // 가입 취소 핸들러
 async function onUnsubscribe() {
   try {
-    await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
+    if (props.product.fin_prdt_cd.startsWith('S')) {
+      await api.delete(`/products/saving-products/subscribe/${props.product.fin_prdt_cd}/`);
+    } else {
+      await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
+    }
     router.push('/my-products');
   } catch (err) {
     console.error('Unsubscribe failed:', err);
