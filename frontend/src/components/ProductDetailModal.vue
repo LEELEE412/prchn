@@ -68,6 +68,7 @@
             >
               {{ option.save_trm }}개월 
               (기본 {{ option.intr_rate }}% / 우대 {{ option.intr_rate2 }}%)
+              )
             </option>
           </select>
         </div>
@@ -77,18 +78,13 @@
           <button
             v-if="userStore.isLogin && !isSubscribed"
             class="subscribe-btn"
-            :disabled="!selectedTerm"
             @click="onSubscribe"
-          >
-            {{ selectedTerm ? `${selectedTerm}개월 가입하기` : '가입기간을 선택하세요' }}
-          </button>
-          <button
+          >가입하기</button>
+          <button 
             v-else-if="userStore.isLogin && isSubscribed"
             class="unsubscribe-btn"
             @click="onUnsubscribe"
-          >
-            가입 취소
-          </button>
+          >가입 취소</button>
           <RouterLink v-else to="/login" class="subscribe-btn">
             로그인 후 가입
           </RouterLink>
@@ -113,7 +109,6 @@ const props = defineProps({
 
 const router = useRouter();
 const userStore = useUserStore();
-const selectedTerm = ref('');
 
 // 가입기간 순으로 정렬된 옵션
 const sortedOptions = computed(() => {
@@ -122,18 +117,13 @@ const sortedOptions = computed(() => {
 
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  return userStore.subscribed?.includes(props.product.fin_prdt_cd);
+  return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
 });
 
 // 가입하기 핸들러
 async function onSubscribe() {
-  if (!selectedTerm.value) return;
-  
   try {
-    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`, {
-      term: selectedTerm.value
-    });
-    userStore.subscribed.push(props.product.fin_prdt_cd);
+    await api.post(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
     router.push('/my-products');
   } catch (err) {
     console.error('Subscription failed:', err);
@@ -145,7 +135,6 @@ async function onSubscribe() {
 async function onUnsubscribe() {
   try {
     await api.delete(`/products/deposit-products/subscribe/${props.product.fin_prdt_cd}/`);
-    userStore.subscribed = userStore.subscribed.filter(id => id !== props.product.fin_prdt_cd);
     router.push('/my-products');
   } catch (err) {
     console.error('Unsubscribe failed:', err);
@@ -258,22 +247,6 @@ async function onUnsubscribe() {
   margin: 0;
 }
 
-.subscription-form {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-}
-
-.term-select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-  font-size: 1rem;
-}
-
 .action-area {
   margin-top: 1.5rem;
   text-align: center;
@@ -299,17 +272,12 @@ async function onUnsubscribe() {
   background-color: #005bb5;
 }
 
-.subscribe-btn:disabled {
-  background-color: #cbd5e1;
-  cursor: not-allowed;
-}
-
 .unsubscribe-btn {
-  background-color: #ef4444;
+  background-color: #dc2626;
   color: #fff;
 }
 
 .unsubscribe-btn:hover {
-  background-color: #dc2626;
+  background-color: #b91c1c;
 }
 </style>
