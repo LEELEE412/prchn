@@ -120,7 +120,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'subscribe', 'unsubscribe']);
+const emit = defineEmits(['close', 'subscribe']);
 const userStore = useUserStore();
 
 // 날짜 관련 상태
@@ -136,10 +136,7 @@ const sortedOptions = computed(() => {
 
 // 이미 구독된 상품인지 체크
 const isSubscribed = computed(() => {
-  const products = props.product.fin_prdt_cd.startsWith('120') 
-    ? userStore.subscribed_deposit_products 
-    : userStore.subscirbed_saving_products;
-  return products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
+  return userStore.subscribed_deposit_products?.some(p => p.fin_prdt_cd === props.product.fin_prdt_cd);
 });
 
 // 가입 가능 여부 체크

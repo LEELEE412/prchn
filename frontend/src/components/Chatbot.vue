@@ -1,4 +1,3 @@
-<!-- src/components/Chatbot.vue -->
 <template>
   <!-- 1) 로그인 상태일 때만 뜨는 채팅 아이콘 -->
   <div v-if="isLogin" class="chat-icon" @click="open = !open">
@@ -87,12 +86,8 @@ async function send() {
 
 async function handleSubscribe(subscriptionData) {
   try {
-    const endpoint = selectedProduct.value.fin_prdt_cd.startsWith('120')
-      ? 'deposit-products'
-      : 'saving-products';
-      
     await api.post(
-      `/products/${endpoint}/subscribe/${selectedProduct.value.fin_prdt_cd}/`,
+      `/products/deposit-products/subscribe/${selectedProduct.value.fin_prdt_cd}/`,
       subscriptionData
     )
     selectedProduct.value = null
